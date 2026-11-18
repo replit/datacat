@@ -14,6 +14,8 @@ fi
 "$BUILDER" --config manifest.yaml --skip-compilation
 cp main.go config.go logoperator.go config_test.go logoperator_test.go _build/
 cd _build
+# Build with a patched Go toolchain (standard-library security fixes); see docs/AUDIT.md.
+go mod edit -toolchain=go1.26.11
 go mod tidy
 go test -p "${GO_BUILD_PARALLELISM:-2}" -trimpath -tags grpcnotrace ./...
 TARGETS="${TARGETS:-linux/amd64 linux/arm64 darwin/arm64 darwin/amd64}" bash ../notices.sh "$OUT/datacat-agent-THIRD_PARTY_NOTICES.txt"

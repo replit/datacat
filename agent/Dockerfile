@@ -1,4 +1,4 @@
-FROM golang:1.25-bookworm AS build
+FROM golang:1.26.11-bookworm AS build
 WORKDIR /src/agent
 COPY agent/ .
 RUN CGO_ENABLED=0 DESTDIR=/out bash build.sh

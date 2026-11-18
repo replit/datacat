@@ -118,7 +118,7 @@ proxying is disabled; no upstream vendor credentials or forwarding are used.
 
 ## Build
 
-Install Go 1.25 or newer and ensure `go` is on your PATH.
+Install Go 1.26.11 or newer and ensure `go` is on your PATH.
 
 ```sh
 cd agent
