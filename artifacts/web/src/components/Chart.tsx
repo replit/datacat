@@ -133,7 +133,7 @@ export function TimeseriesChart({
           <BarChart {...common}>
             {axes}
             {keys.map((k) => (
-              <Bar key={k.key} dataKey={k.key} fill={k.color} stackId={stacked ? "a" : undefined} isAnimationActive={false} />
+              <Bar key={k.key} dataKey={k.key} fill={k.color} stackId={stacked !== false ? "a" : undefined} isAnimationActive={false} />
             ))}
           </BarChart>
         ) : type === "area" ? (
