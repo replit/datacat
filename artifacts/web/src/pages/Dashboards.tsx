@@ -694,21 +694,29 @@ export function DashboardView() {
   };
   return (
     <div className="min-h-full bg-canvas">
-      <div className="flex items-center gap-2 px-5 h-[50px] border-b border-line bg-white sticky top-0 z-20">
-        <button onClick={() => toggleFav(id)} title="Favorite" className="text-ink-3 hover:text-accent">
-          <Star size={17} className={isFav ? "fill-accent text-accent" : ""} />
-        </button>
-        {editing ? (
-          <input className="input text-[16px] font-semibold w-96" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
-        ) : (
-          <h1 className="text-[18px] font-semibold truncate">{draft.title}</h1>
-        )}
-        {draft.description && !editing && (
-          <span className="text-ink-3 text-xs truncate max-w-[320px]" title={draft.description}>
-            {draft.description}
-          </span>
-        )}
-        <div className="ml-auto flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-2 px-5 py-2 min-h-[50px] border-b border-line bg-white sticky top-0 z-20">
+        <div className="flex flex-[1_1_18rem] min-w-0 items-center gap-2">
+          <button onClick={() => toggleFav(id)} title="Favorite" className="shrink-0 text-ink-3 hover:text-accent">
+            <Star size={17} className={isFav ? "fill-accent text-accent" : ""} />
+          </button>
+          {editing ? (
+            <input
+              className="input text-[16px] font-semibold min-w-0 w-96"
+              value={draft.title}
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+            />
+          ) : (
+            <h1 className="text-[18px] font-semibold truncate shrink-0 max-w-[calc(100%-25px)]" title={draft.title}>
+              {draft.title}
+            </h1>
+          )}
+          {draft.description && !editing && (
+            <span className="text-ink-3 text-xs truncate max-w-[320px]" title={draft.description}>
+              {draft.description}
+            </span>
+          )}
+        </div>
+        <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-1.5 whitespace-nowrap">
           {editing ? (
             <>
               <button
