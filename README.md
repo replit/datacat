@@ -15,7 +15,7 @@ No hosted account or external service is required.
 - OpenTelemetry Collector-based host agent and Node.js/Python instrumentation libraries
 - One production process serving the API, web UI, installer and downloads
 
-![DataCat dashboard](docs/images/dashboard.jpg)
+![DataCat dashboard](docs/images/dashboard-overview.jpg)
 
 ## Quick start with Docker Compose
 
