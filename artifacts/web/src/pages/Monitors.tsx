@@ -3,13 +3,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useParams, useSearch } from "wouter";
 import { Plus, Search, BellOff, Bell, Pencil, Trash2, Copy, LineChart, ScrollText, Activity, ChevronDown, ChevronRight, Hash, Webhook } from "lucide-react";
 import { api } from "@/lib/api";
-import { PageHeader, TABS, ICONS } from "@/components/Layout";
+import { PageHeader, TABS } from "@/components/Layout";
 import { StatusBadge, Empty } from "@/components/Panels";
 import { TimeseriesChart } from "@/components/Chart";
 import { MetricQueryRow } from "@/components/QueryEditor";
 import { TimePicker } from "@/components/TimePicker";
 import { useTime } from "@/lib/time";
 import { fmtAgo, fmtNum, fmtTime } from "@/lib/format";
+import { Button, Input, Select, Textarea, badgeStyles, buttonStyles, cardStyles, cn, sectionTitleStyles, tableStyles } from "@/components/ui";
 
 export interface Monitor {
   id: number;
@@ -38,7 +39,7 @@ function FacetGroup({ title, children, defaultOpen = true }: { title: string; ch
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border-b border-line">
-      <div className="facet-title" onClick={() => setOpen(!open)}>
+      <div className="flex items-center gap-1 px-3 h-8 text-[13px] font-semibold text-ink cursor-pointer select-none" onClick={() => setOpen(!open)}>
         {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         {title}
       </div>
@@ -48,7 +49,7 @@ function FacetGroup({ title, children, defaultOpen = true }: { title: string; ch
 }
 function FacetRow({ checked, onChange, children, count, indent }: { checked: boolean; onChange: () => void; children: any; count?: number; indent?: boolean }) {
   return (
-    <label className={`flex items-center gap-2 pr-3 ${indent ? "pl-8" : "pl-4"} h-[26px] text-[13px] cursor-pointer hover:bg-[#f2f4fb]`}>
+    <label className={`flex items-center gap-2 pr-3 ${indent ? "pl-8" : "pl-4"} h-[26px] text-[13px] cursor-pointer hover:bg-brand-50`}>
       <input type="checkbox" className="accent-primary" checked={checked} onChange={onChange} />
       <span className="flex-1 truncate flex items-center gap-1.5">{children}</span>
       {count !== undefined && <span className="text-[12px] text-ink-3">{count}</span>}
@@ -113,15 +114,15 @@ export function MonitorList() {
   };
   return (
     <div className="h-full flex flex-col">
-      <PageHeader title="Monitors" icon={ICONS.mon} tabs={TABS.mon}>
-        <Link href="/monitors/create" className="btn-primary" data-testid="new-monitor">
+      <PageHeader title="Monitors" tabs={TABS.mon}>
+        <Link href="/monitors/create" className={buttonStyles({ variant: "primary" })} data-testid="new-monitor">
           <Plus size={14} /> New Monitor
         </Link>
       </PageHeader>
       <div className="px-5 pt-3 pb-2">
         <div className="relative">
           <Search size={14} className="absolute left-2.5 top-2 text-ink-3" />
-          <input className="input w-full pl-8" placeholder="Filter monitors" value={q} onChange={(e) => setQ(e.target.value)} data-testid="monitor-search" />
+          <Input className="w-full pl-8" placeholder="Filter monitors" value={q} onChange={(e) => setQ(e.target.value)} data-testid="monitor-search" />
         </div>
       </div>
       <div className="flex flex-1 min-h-0 px-5 gap-4">
@@ -222,15 +223,15 @@ export function MonitorList() {
               onChange={(e) => setSel(e.target.checked ? rows.map((m) => m.id) : [])}
               aria-label="Select all"
             />
-            <button className="btn btn-sm" disabled={!sel.length} onClick={() => bulk.mutate("mute")}>
+            <Button size="sm" disabled={!sel.length} onClick={() => bulk.mutate("mute")}>
               <BellOff size={12} /> Mute
-            </button>
-            <button className="btn btn-sm" disabled={!sel.length} onClick={() => bulk.mutate("unmute")}>
+            </Button>
+            <Button size="sm" disabled={!sel.length} onClick={() => bulk.mutate("unmute")}>
               <Bell size={12} /> Unmute
-            </button>
-            <button className="btn btn-sm" disabled={!sel.length} onClick={() => confirm(`Delete ${sel.length} monitor(s)?`) && bulk.mutate("delete")}>
+            </Button>
+            <Button size="sm" disabled={!sel.length} onClick={() => confirm(`Delete ${sel.length} monitor(s)?`) && bulk.mutate("delete")}>
               <Trash2 size={12} /> Delete
-            </button>
+            </Button>
             {sel.length > 0 && <span className="text-[12px] text-ink-2 ml-2">{sel.length} selected</span>}
           </div>
           {rows.length === 0 && !mons.isLoading ? (
@@ -241,7 +242,7 @@ export function MonitorList() {
               </Link>
             </Empty>
           ) : (
-            <table className="tbl">
+            <table className={tableStyles()}>
               <thead>
                 <tr>
                   <th className="w-8"></th>
@@ -284,11 +285,11 @@ export function MonitorList() {
                     <td>
                       <div className="flex gap-1">
                         {m.tags.slice(0, 2).map((t) => (
-                          <span key={t} className="chip">
+                          <span key={t} className={badgeStyles()}>
                             {t}
                           </span>
                         ))}
-                        {m.tags.length > 2 && <span className="chip">+{m.tags.length - 2}</span>}
+                        {m.tags.length > 2 && <span className={badgeStyles()}>+{m.tags.length - 2}</span>}
                       </div>
                     </td>
                     <td>
@@ -391,9 +392,9 @@ function fromMonitor(m: Monitor): Form {
 
 function Step({ n, title, children }: { n: number; title: string; children: any }) {
   return (
-    <section className="card p-5">
+    <section className={cardStyles({ className: "p-5" })}>
       <div className="flex items-center gap-2.5 mb-3">
-        <span className="w-6 h-6 rounded-full bg-[#e9ebf0] text-ink text-[12px] font-bold flex items-center justify-center">{n}</span>
+        <span className="w-6 h-6 rounded-full bg-subtle text-ink text-[12px] font-bold flex items-center justify-center">{n}</span>
         <span className="text-[16px] font-semibold">{title}</span>
       </div>
       {children}
@@ -428,7 +429,7 @@ function Preview({ f, active = true }: { f: Form; active?: boolean }) {
   if (f.critical !== "") th.push({ value: Number(f.critical), color: "#d33b4c", label: "Alert", above: f.op.startsWith(">") });
   if (f.warning !== "") th.push({ value: Number(f.warning), color: "#e8a317", label: "Warn" });
   return (
-    <div className="card p-3 bg-white">
+    <div className={cardStyles({ className: "p-3 bg-white" })}>
       <div className="flex items-center mb-1 text-xs text-ink-2">
         Evaluation preview
         <div className="ml-auto">
@@ -519,13 +520,13 @@ export function MonitorEdit() {
   ];
   return (
     <div className="bg-panel min-h-full">
-      <PageHeader icon={ICONS.mon} title={editingId ? `Edit monitor` : "New Monitor"} sub={editingId ? f.name : undefined}>
-        <Link href="/monitors/manage" className="btn">
+      <PageHeader title={editingId ? `Edit monitor` : "New Monitor"} sub={editingId ? f.name : undefined}>
+        <Link href="/monitors/manage" className={buttonStyles()}>
           Cancel
         </Link>
-        <button className="btn-primary" onClick={() => save.mutate()} disabled={save.isPending} data-testid="save-monitor">
+        <Button variant="primary" onClick={() => save.mutate()} disabled={save.isPending} data-testid="save-monitor">
           {editingId ? "Save" : "Create"}
-        </button>
+        </Button>
       </PageHeader>
       <div className="max-w-5xl mx-auto p-6 space-y-4">
         {!editingId && (
@@ -534,7 +535,7 @@ export function MonitorEdit() {
               <button
                 key={k.k}
                 onClick={() => set({ kind: k.k })}
-                className={`card p-4 text-left ${f.kind === k.k ? "!border-primary ring-2 ring-brand-100" : "hover:border-brand-400"}`}
+                className={cardStyles({ className: cn("p-4 text-left", f.kind === k.k ? "border-primary ring-2 ring-brand-100" : "hover:border-brand-400") })}
                 data-testid={`monitor-type-${k.k}`}
               >
                 <div className="flex items-center gap-2 font-semibold mb-1">
@@ -557,7 +558,7 @@ export function MonitorEdit() {
               <MetricQueryRow q={{ name: "a", query: f.query }} onChange={(q) => set({ query: q.query })} />
               <div className="flex items-center gap-2 text-[13px] pl-8">
                 <span>Evaluate the</span>
-                <select className="input" value={f.timeAgg} onChange={(e) => set({ timeAgg: e.target.value })}>
+                <Select value={f.timeAgg} onChange={(e) => set({ timeAgg: e.target.value })}>
                   {[
                     ["avg", "average"],
                     ["max", "maximum"],
@@ -569,9 +570,9 @@ export function MonitorEdit() {
                       {l}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <span>of the query over the</span>
-                <select className="input" value={f.window} onChange={(e) => set({ window: e.target.value })}>
+                <Select value={f.window} onChange={(e) => set({ window: e.target.value })}>
                   {[
                     ["1m", "last 1 minute"],
                     ["5m", "last 5 minutes"],
@@ -586,7 +587,7 @@ export function MonitorEdit() {
                       {l}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <p className="text-xs text-ink-3 pl-8">
                 Add <span className="mono">by {"{host}"}</span> to get a separate alert for each host (multi alert).
@@ -595,8 +596,8 @@ export function MonitorEdit() {
           </div>
           <div className={f.kind === "metric" ? "hidden" : ""}>
             <div className="space-y-3">
-              <input
-                className="input w-full mono text-xs"
+              <Input
+                className="w-full mono text-xs"
                 value={f.logQuery}
                 onChange={(e) => set({ logQuery: e.target.value })}
                 placeholder={f.kind === "log" ? "service:web status:error" : "service:web status:error"}
@@ -604,15 +605,15 @@ export function MonitorEdit() {
               />
               <div className="flex items-center gap-2 text-[13px]">
                 <span>{f.kind === "log" ? "Count matching logs over the" : "Count matching spans over the"}</span>
-                <select className="input" value={f.window} onChange={(e) => set({ window: e.target.value })}>
+                <Select value={f.window} onChange={(e) => set({ window: e.target.value })}>
                   {["1m", "5m", "10m", "15m", "30m", "1h", "4h", "1d"].map((v) => (
                     <option key={v} value={v}>
                       last {v}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <span>grouped by</span>{" "}
-                <input className="input w-40" value={f.groupBy} onChange={(e) => set({ groupBy: e.target.value })} placeholder="(none) e.g. service" />
+                <Input className="w-40" value={f.groupBy} onChange={(e) => set({ groupBy: e.target.value })} placeholder="(none) e.g. service" />
               </div>
             </div>
           </div>
@@ -621,7 +622,7 @@ export function MonitorEdit() {
           <div className="space-y-3 text-[13px]">
             <div className="flex items-center gap-2">
               <span>Trigger when the evaluated value is</span>
-              <select className="input" value={f.op} onChange={(e) => set({ op: e.target.value })}>
+              <Select value={f.op} onChange={(e) => set({ op: e.target.value })}>
                 {[
                   [">", "above"],
                   [">=", "above or equal to"],
@@ -632,16 +633,16 @@ export function MonitorEdit() {
                     {l}
                   </option>
                 ))}
-              </select>
+              </Select>
               <span>the threshold</span>
             </div>
             <div className="grid grid-cols-[160px_160px] gap-x-4 gap-y-2 items-center">
               <label className="font-semibold text-alert">Alert threshold</label>
-              <input className="input" value={f.critical} onChange={(e) => set({ critical: e.target.value })} data-testid="critical-threshold" />
+              <Input value={f.critical} onChange={(e) => set({ critical: e.target.value })} data-testid="critical-threshold" />
               <label className="font-semibold text-warn">Warning threshold</label>
-              <input className="input" value={f.warning} onChange={(e) => set({ warning: e.target.value })} placeholder="optional" />
+              <Input value={f.warning} onChange={(e) => set({ warning: e.target.value })} placeholder="optional" />
               <label className="text-ink-2">Alert recovery threshold</label>
-              <input className="input" value={f.recovery} onChange={(e) => set({ recovery: e.target.value })} placeholder="optional" />
+              <Input value={f.recovery} onChange={(e) => set({ recovery: e.target.value })} placeholder="optional" />
             </div>
             <label className="flex items-center gap-2">
               <input type="checkbox" className="accent-primary" checked={f.notifyNoData} onChange={(e) => set({ notifyNoData: e.target.checked })} />
@@ -651,15 +652,9 @@ export function MonitorEdit() {
         </Step>
         <Step n={3} title="Configure notifications & automations">
           <div className="space-y-3">
-            <input
-              className="input w-full"
-              value={f.name}
-              onChange={(e) => set({ name: e.target.value })}
-              placeholder={defaultName(f)}
-              data-testid="monitor-name"
-            />
-            <textarea
-              className="input w-full h-36 py-2 mono text-xs"
+            <Input className="w-full" value={f.name} onChange={(e) => set({ name: e.target.value })} placeholder={defaultName(f)} data-testid="monitor-name" />
+            <Textarea
+              className="w-full h-36 py-2 mono text-xs"
               value={f.message}
               onChange={(e) => set({ message: e.target.value })}
               data-testid="monitor-message"
@@ -669,7 +664,7 @@ export function MonitorEdit() {
               {(channels.data?.channels ?? []).map((c) => (
                 <button
                   key={c.id}
-                  className="chip !bg-[#eef2fc] !text-primary hover:!bg-brand-100"
+                  className={badgeStyles({ tone: "brand", className: "hover:bg-brand-100" })}
                   onClick={() => set({ message: f.message.trimEnd() + ` @${c.kind === "slack" ? "slack" : "webhook"}-${c.name}\n` })}
                 >
                   @{c.kind === "slack" ? "slack" : "webhook"}-{c.name}
@@ -685,32 +680,32 @@ export function MonitorEdit() {
             </p>
             <div className="flex gap-4">
               <label className="text-xs">
-                Tags <input className="input w-72 ml-1" value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="team:web, env:prod" />
+                Tags <Input className="w-72 ml-1" value={f.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="team:web, env:prod" />
               </label>
               <label className="text-xs">
                 Re-notify every{" "}
-                <select className="input ml-1" value={f.renotify} onChange={(e) => set({ renotify: e.target.value })}>
+                <Select className="ml-1" value={f.renotify} onChange={(e) => set({ renotify: e.target.value })}>
                   <option value="">never</option>
                   <option value="10">10 min</option>
                   <option value="30">30 min</option>
                   <option value="60">1 hour</option>
-                </select>
+                </Select>
               </label>
               <label className="text-xs">
                 Priority{" "}
-                <select className="input ml-1" value={f.priority} onChange={(e) => set({ priority: e.target.value })}>
+                <Select className="ml-1" value={f.priority} onChange={(e) => set({ priority: e.target.value })}>
                   <option value="">none</option>
                   {[1, 2, 3, 4, 5].map((p) => (
                     <option key={p} value={p}>
                       P{p}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
             </div>
           </div>
         </Step>
-        {err && <div className="card border-alert/40 bg-red-50 text-alert p-3 text-sm">{err}</div>}
+        {err && <div className={cardStyles({ className: "border-alert/40 bg-red-50 text-alert p-3 text-sm" })}>{err}</div>}
       </div>
     </div>
   );
@@ -900,7 +895,7 @@ function RelatedTelemetry({ query, groups }: { query: string; groups: [string, a
   const services = servicesOf(query, groups);
   if (!services.length) return null;
   return (
-    <div className="card" data-testid="related-telemetry">
+    <div className={cardStyles()} data-testid="related-telemetry">
       <div className="px-4 py-2 border-b border-line font-semibold">
         Related telemetry <span className="font-normal text-ink-3 text-xs">errors in the selected time range</span>
       </div>
@@ -982,10 +977,8 @@ export function MonitorStatus() {
         }
       >
         <TimePicker />
-        <button className="btn" onClick={() => evalNow.mutate()}>
-          Evaluate now
-        </button>
-        <button className="btn" onClick={() => mute.mutate(!muted)}>
+        <Button onClick={() => evalNow.mutate()}>Evaluate now</Button>
+        <Button onClick={() => mute.mutate(!muted)}>
           {muted ? (
             <>
               <Bell size={14} /> Unmute
@@ -995,19 +988,19 @@ export function MonitorStatus() {
               <BellOff size={14} /> Mute
             </>
           )}
-        </button>
-        <Link href={`/monitors/${id}/edit`} className="btn" data-testid="edit-monitor">
+        </Button>
+        <Link href={`/monitors/${id}/edit`} className={buttonStyles()} data-testid="edit-monitor">
           <Pencil size={14} /> Edit
         </Link>
-        <Link href={`/monitors/create?clone=${id}`} className="btn !px-2" title="Clone">
+        <Link href={`/monitors/create?clone=${id}`} className={buttonStyles({ size: "icon" })} title="Clone">
           <Copy size={14} />
         </Link>
-        <button className="btn !px-2 text-alert" title="Delete" onClick={() => confirm("Delete this monitor?") && del.mutate()}>
+        <Button className="px-2 text-alert" title="Delete" onClick={() => confirm("Delete this monitor?") && del.mutate()}>
           <Trash2 size={14} />
-        </button>
+        </Button>
       </PageHeader>
       <div className="p-6 space-y-4">
-        <div className="card p-4 space-y-2">
+        <div className={cardStyles({ className: "p-4 space-y-2" })}>
           <div className="text-xs text-ink-3">Query</div>
           <div className="mono text-xs bg-panel border border-line rounded p-2 break-all" data-testid="monitor-query">
             {m.data.query}
@@ -1026,8 +1019,8 @@ export function MonitorStatus() {
             {muted && <span className="text-ink">Muted</span>}
           </div>
         </div>
-        <div className="card p-4">
-          <div className="section-title mb-2">Status history</div>
+        <div className={cardStyles({ className: "p-4" })}>
+          <div className={sectionTitleStyles({ className: "mb-2" })}>Status history</div>
           <div className="flex h-5 rounded overflow-hidden">
             {timeline.map((s, i) => (
               <div key={i} title={`${s.state} from ${fmtTime(s.from, true)}`} style={{ flex: Math.max(1, s.to - s.from), background: color[s.state] }} />
@@ -1039,9 +1032,9 @@ export function MonitorStatus() {
         </div>
         <RelatedTelemetry query={m.data.query} groups={groups} />
         <div className="grid grid-cols-2 gap-4">
-          <div className="card">
+          <div className={cardStyles()}>
             <div className="px-4 py-2 border-b border-line font-semibold">Groups ({groups.length})</div>
-            <table className="tbl">
+            <table className={tableStyles()}>
               <thead>
                 <tr>
                   <th>Status</th>
@@ -1064,7 +1057,7 @@ export function MonitorStatus() {
               </tbody>
             </table>
           </div>
-          <div className="card">
+          <div className={cardStyles()}>
             <div className="px-4 py-2 border-b border-line font-semibold">Events & notifications</div>
             <div className="max-h-96 overflow-auto scroll-thin">
               {(hist.data?.events ?? []).map((e) => (
@@ -1101,8 +1094,8 @@ export function MonitorStatus() {
             </div>
           </div>
         </div>
-        <div className="card p-4">
-          <div className="section-title mb-2">Message</div>
+        <div className={cardStyles({ className: "p-4" })}>
+          <div className={sectionTitleStyles({ className: "mb-2" })}>Message</div>
           <pre className="mono text-xs whitespace-pre-wrap text-ink-2">{m.data.message}</pre>
         </div>
       </div>

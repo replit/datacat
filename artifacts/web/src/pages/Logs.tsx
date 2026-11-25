@@ -2,14 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearch } from "wouter";
 import { Search, Radio, List, LineChart, BarChart3, Table2, Copy } from "lucide-react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip, CartesianGrid } from "recharts";
 import { api } from "@/lib/api";
-import { PageHeader, TABS, ICONS } from "@/components/Layout";
+import { PageHeader, TABS } from "@/components/Layout";
 import { TimePicker } from "@/components/TimePicker";
 import { SidePanel, Facet, Empty } from "@/components/Panels";
 import { TimeseriesChart } from "@/components/Chart";
 import { useTime } from "@/lib/time";
 import { fmtTime, fmtNum, STATUS_COLORS, colorFor } from "@/lib/format";
+import { Button, Input, Select, badgeStyles, buttonStyles, cardStyles, labelStyles, tableStyles } from "@/components/ui";
 
 export interface LogRow {
   id: string;
@@ -168,11 +169,10 @@ export function LogsExplorer() {
     <div className="h-full flex flex-col">
       <PageHeader
         title="Logs"
-        icon={ICONS.logs}
         tabs={TABS.logs}
         sub={live ? "Live Tail" : list.data ? `${fmtNum(list.data.total)}${list.data.total_capped ? "+" : ""} logs found` : undefined}
       >
-        <button className={live ? "btn-primary" : "btn"} onClick={() => setLive(!live)} data-testid="live-tail">
+        <button className={buttonStyles({ variant: live ? "primary" : "secondary" })} onClick={() => setLive(!live)} data-testid="live-tail">
           <Radio size={14} /> {live ? "Live Tail on" : "Live Tail"}
         </button>
         {!live && <TimePicker />}
@@ -186,8 +186,8 @@ export function LogsExplorer() {
           }}
         >
           <Search size={14} className="absolute left-2.5 top-2.5 text-ink-3" />
-          <input
-            className="input w-full pl-8 text-[13px]"
+          <Input
+            className="w-full pl-8 text-[13px]"
             placeholder='Search for logs, e.g. service:web status:error @http.status_code:>=500 "timeout"'
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -210,7 +210,7 @@ export function LogsExplorer() {
                 setViz(v);
                 if (v !== "list") setLive(false);
               }}
-              className={`h-[30px] px-2.5 border border-[#cfd3da] -ml-px first:rounded-l-[3px] last:rounded-r-[3px] flex items-center gap-1 text-xs ${viz === v ? "bg-[#eef2fc] text-primary font-semibold border-primary z-10" : "bg-white text-ink-2"}`}
+              className={`h-[30px] px-2.5 border border-line-strong -ml-px first:rounded-l-[3px] last:rounded-r-[3px] flex items-center gap-1 text-xs ${viz === v ? "bg-brand-100 text-primary font-semibold border-primary z-10" : "bg-white text-ink-2"}`}
             >
               <Icon size={13} />
               {label}
@@ -220,13 +220,13 @@ export function LogsExplorer() {
         {viz !== "list" && (
           <label className="text-xs flex items-center gap-1">
             by{" "}
-            <select className="input" value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
+            <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
               {["", "service", "status", "host", "source", "env", "@http.status_code"].map((g) => (
                 <option key={g} value={g}>
                   {g || "(everything)"}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         )}
       </div>
@@ -234,6 +234,7 @@ export function LogsExplorer() {
         <div className="h-24 px-6 pt-2 border-b border-line">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={histData} margin={{ top: 0, bottom: 0, left: 0, right: 0 }}>
+              <CartesianGrid stroke="#eceef2" vertical={false} />
               <XAxis
                 dataKey="t"
                 tickFormatter={(t) => fmtTime(t).slice(0, 5)}
@@ -274,7 +275,7 @@ export function LogsExplorer() {
                 )}
               </Empty>
             ) : (
-              <table className="tbl">
+              <table className={tableStyles()}>
                 <thead className="sticky top-0 z-10">
                   <tr>
                     <th className="w-2 !px-0"></th>
@@ -288,7 +289,7 @@ export function LogsExplorer() {
                   {rows.map((l) => (
                     <tr
                       key={l.id}
-                      className={`cursor-pointer [&>td]:!h-[28px] ${sel?.id === l.id ? "!bg-[#e8eefc]" : ""}`}
+                      className={`cursor-pointer [&>td]:!h-[28px] ${sel?.id === l.id ? "!bg-brand-100" : ""}`}
                       onClick={() => setSel(l)}
                       data-testid="log-row"
                     >
@@ -313,7 +314,7 @@ export function LogsExplorer() {
             )
           ) : viz === "timeseries" ? (
             <div className="p-6">
-              <div className="card p-3">
+              <div className={cardStyles({ className: "p-3" })}>
                 <TimeseriesChart
                   series={(agg.data?.series ?? []).map((s: any) => ({ label: s.group.join(",") || "count", points: s.pointlist }))}
                   type="bars"
@@ -327,7 +328,7 @@ export function LogsExplorer() {
             </div>
           ) : (
             <div className="p-6">
-              <div className="card p-3">
+              <div className={cardStyles({ className: "p-3" })}>
                 {(agg.data?.rows ?? []).map((r: any, i: number) => {
                   const max = Math.max(...(agg.data?.rows ?? []).map((x: any) => x.value), 1);
                   return viz === "toplist" ? (
@@ -372,7 +373,7 @@ export function LogsExplorer() {
             <div className="flex flex-wrap gap-4 text-xs">
               {(["host", "service", "source"] as const).map((k) => (
                 <div key={k}>
-                  <div className="label">{k}</div>
+                  <div className={labelStyles()}>{k}</div>
                   <button className="text-primary hover:underline" onClick={() => addFilter(k, sel[k])}>
                     {sel[k] || "—"}
                   </button>
@@ -380,7 +381,7 @@ export function LogsExplorer() {
               ))}
               {sel.trace_id && (
                 <div>
-                  <div className="label">Trace</div>
+                  <div className={labelStyles()}>Trace</div>
                   <Link className="text-primary hover:underline" href={`/apm/trace/${sel.trace_id}`}>
                     View trace →
                   </Link>
@@ -396,12 +397,12 @@ export function LogsExplorer() {
               </button>
             </div>
             <div>
-              <div className="label mb-1">Tags</div>
+              <div className={labelStyles({ className: "mb-1" })}>Tags</div>
               <div className="flex flex-wrap gap-1">
                 {sel.tags.map((t) => (
                   <button
                     key={t}
-                    className="chip hover:!bg-[#eef2fc]"
+                    className={badgeStyles({ className: "hover:bg-brand-100" })}
                     onClick={() => {
                       const i = t.indexOf(":");
                       if (i > 0) addFilter(t.slice(0, i), t.slice(i + 1));
@@ -414,11 +415,10 @@ export function LogsExplorer() {
               </div>
             </div>
             <div>
-              <div className="label mb-1">Event attributes</div>
+              <div className={labelStyles({ className: "mb-1" })}>Event attributes</div>
               <JsonTree data={sel.attributes} onFilter={addFilter} />
             </div>
-            <button
-              className="btn"
+            <Button
               onClick={() => {
                 const q = `host:${sel.host}`;
                 setQuery(q);
@@ -427,7 +427,7 @@ export function LogsExplorer() {
               }}
             >
               View in context (same host)
-            </button>
+            </Button>
           </div>
         )}
       </SidePanel>

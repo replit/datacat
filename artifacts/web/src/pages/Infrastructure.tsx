@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Search, Map as MapIcon, List } from "lucide-react";
 import { api } from "@/lib/api";
-import { PageHeader, TABS, ICONS } from "@/components/Layout";
+import { PageHeader, TABS } from "@/components/Layout";
 import { SidePanel, Empty } from "@/components/Panels";
 import { TimeseriesChart } from "@/components/Chart";
 import { useTime, TimeProvider } from "@/lib/time";
 import { TimePicker } from "@/components/TimePicker";
 import { fmtAgo, fmtNum, fmtPct, fmtTime, STATUS_COLORS, fmtDuration } from "@/lib/format";
+import { Input, Select, badgeStyles, cardStyles, labelStyles, tableStyles } from "@/components/ui";
 
 export interface Host {
   id: number;
@@ -103,7 +104,7 @@ function HostCharts({ host }: { host: string }) {
   return (
     <div className="grid grid-cols-2 gap-3">
       {(q.data ?? []).map((c) => (
-        <div key={c.title} className="card p-2">
+        <div key={c.title} className={cardStyles({ className: "p-2" })}>
           <div className="text-xs font-medium mb-1">{c.title}</div>
           <TimeseriesChart series={c.series} height={130} type={c.title.startsWith("CPU") ? "area" : "line"} from={from} to={to} />
         </div>
@@ -124,7 +125,7 @@ function HostLogsAndTraces({ host }: { host: string }) {
   });
   return (
     <div className="grid grid-cols-1 gap-3">
-      <div className="card">
+      <div className={cardStyles()}>
         <div className="flex items-center px-3 py-2 border-b border-line text-xs font-semibold">
           Logs{" "}
           <Link className="ml-auto text-primary font-normal" href={`/logs?query=${encodeURIComponent(`host:${host}`)}`}>
@@ -141,7 +142,7 @@ function HostLogsAndTraces({ host }: { host: string }) {
         ))}
         {!logs.data?.logs.length && <div className="px-3 py-2 text-xs text-ink-3">No logs from this host in this time range</div>}
       </div>
-      <div className="card">
+      <div className={cardStyles()}>
         <div className="flex items-center px-3 py-2 border-b border-line text-xs font-semibold">
           Traces{" "}
           <Link className="ml-auto text-primary font-normal" href={`/apm/traces?query=${encodeURIComponent(`host:${host}`)}`}>
@@ -149,7 +150,7 @@ function HostLogsAndTraces({ host }: { host: string }) {
           </Link>
         </div>
         {(spans.data?.spans ?? []).map((s) => (
-          <Link key={s.id} href={`/apm/trace/${s.trace_id}`} className="flex gap-2 px-3 py-1 text-xs border-b border-line/60 hover:bg-[#eef2fc]">
+          <Link key={s.id} href={`/apm/trace/${s.trace_id}`} className="flex gap-2 px-3 py-1 text-xs border-b border-line/60 hover:bg-brand-100">
             <span className="text-ink-3 w-16">{fmtTime(s.start_ms)}</span>
             <span className="text-primary w-24 truncate">{s.service}</span>
             <span className="truncate flex-1">{s.resource}</span>
@@ -193,12 +194,12 @@ export function HostPanel({ host, onClose }: { host: Host | null; onClose: () =>
           </div>
           <div className="w-full flex flex-wrap gap-1 pt-1">
             {host.tags.map((t) => (
-              <span key={t} className="chip">
+              <span key={t} className={badgeStyles()}>
                 {t}
               </span>
             ))}
             {host.apps.map((a) => (
-              <span key={a} className="chip !bg-[#eef2fc] !text-primary">
+              <span key={a} className={badgeStyles({ tone: "brand" })}>
                 {a}
               </span>
             ))}
@@ -244,12 +245,12 @@ export function InfraList() {
   );
   return (
     <div>
-      <PageHeader title="Infrastructure" icon={ICONS.infra} tabs={TABS.infra} sub={`${rows.length} hosts`} />
+      <PageHeader title="Infrastructure" tabs={TABS.infra} sub={`${rows.length} hosts`} />
       <div className="p-6">
         <div className="relative mb-3 max-w-xl">
           <Search size={14} className="absolute left-2.5 top-2.5 text-ink-3" />
-          <input
-            className="input w-full pl-8"
+          <Input
+            className="w-full pl-8"
             placeholder="Filter hosts by name, tag or app"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -264,7 +265,7 @@ export function InfraList() {
             </Link>
           </Empty>
         ) : (
-          <table className="tbl card">
+          <table className={tableStyles({ className: "bg-white border border-line rounded-lg" })}>
             <thead>
               <tr>
                 {th("name", "Hostname")}
@@ -295,11 +296,11 @@ export function InfraList() {
                   <td>
                     <div className="flex flex-wrap gap-1">
                       {h.apps.slice(0, 6).map((a) => (
-                        <span key={a} className="chip !bg-[#eef2fc] !text-primary">
+                        <span key={a} className={badgeStyles({ tone: "brand" })}>
                           {a}
                         </span>
                       ))}
-                      {h.apps.length > 6 && <span className="chip">+{h.apps.length - 6}</span>}
+                      {h.apps.length > 6 && <span className={badgeStyles()}>+{h.apps.length - 6}</span>}
                     </div>
                   </td>
                   <td className="text-ink-2">{h.os ?? "—"}</td>
@@ -398,30 +399,30 @@ export function HostMap() {
   const R = 26;
   return (
     <div className="h-full flex flex-col">
-      <PageHeader title="Infrastructure" icon={ICONS.infra} tabs={TABS.infra} sub={`${hosts.length} hosts`} />
+      <PageHeader title="Infrastructure" tabs={TABS.infra} sub={`${hosts.length} hosts`} />
       <div className="flex flex-wrap items-center gap-3 px-6 py-3 border-b border-line bg-panel">
         <label className="flex items-center gap-2 text-xs">
-          <span className="label">Fill by</span>
-          <select className="input" value={fill} onChange={(e) => setFill(e.target.value)} data-testid="fill-by">
+          <span className={labelStyles()}>Fill by</span>
+          <Select value={fill} onChange={(e) => setFill(e.target.value)} data-testid="fill-by">
             {FILL_METRICS.map((m) => (
               <option key={m.value} value={m.value}>
                 {m.label}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <label className="flex items-center gap-2 text-xs">
-          <span className="label">Filter by</span>
-          <input className="input w-64" placeholder="tag or hostname" value={filter} onChange={(e) => setFilter(e.target.value)} />
+          <span className={labelStyles()}>Filter by</span>
+          <Input className="w-64" placeholder="tag or hostname" value={filter} onChange={(e) => setFilter(e.target.value)} />
         </label>
         <label className="flex items-center gap-2 text-xs">
-          <span className="label">Group by</span>
-          <select className="input" value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
+          <span className={labelStyles()}>Group by</span>
+          <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
             <option value="">(none)</option>
             {tagKeys.map((k) => (
               <option key={k}>{k}</option>
             ))}
-          </select>
+          </Select>
         </label>
         <div className="ml-auto flex items-center gap-2 text-xs text-ink-2">
           <span>{fmtNum(min)}</span>
@@ -432,7 +433,7 @@ export function HostMap() {
           <span>{fmtNum(max)}</span>
         </div>
       </div>
-      <div className="flex-1 overflow-auto p-6 bg-[#f3f4f7]">
+      <div className="flex-1 overflow-auto p-6 bg-subtle">
         {hosts.length === 0 && !data.isLoading && <Empty title="No hosts match">Adjust the filter, or install the agent on a host.</Empty>}
         <div className="flex flex-wrap gap-6">
           {groups.map(([g, hs]) => {
@@ -441,7 +442,7 @@ export function HostMap() {
             const w = cols * R * Math.sqrt(3) + R,
               hgt = rows * R * 1.5 + R;
             return (
-              <div key={g} className="card p-3">
+              <div key={g} className={cardStyles({ className: "p-3" })}>
                 {groupBy && (
                   <div className="text-xs font-semibold mb-1">
                     {groupBy}:{g} <span className="text-ink-3 font-normal">({hs.length})</span>

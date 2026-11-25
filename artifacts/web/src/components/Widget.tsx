@@ -7,6 +7,7 @@ import { useTime } from "@/lib/time";
 import { colorFor, fmtNum, fmtTime, STATUS_COLORS } from "@/lib/format";
 import { TimeseriesChart } from "./Chart";
 import { StatusBadge } from "./Panels";
+import { cardStyles, tableStyles } from "@/components/ui";
 
 export interface WidgetDef {
   id?: number;
@@ -173,7 +174,7 @@ function TableBody({ def, vars }: { def: any; vars: Record<string, string> }) {
   const rows = [...groups].sort((a, b) => (b[1][cols[0]] ?? 0) - (a[1][cols[0]] ?? 0));
   return (
     <div className="h-full overflow-auto scroll-thin">
-      <table className="tbl">
+      <table className={tableStyles()}>
         <thead>
           <tr>
             <th>Group</th>
@@ -243,7 +244,7 @@ function MonitorSummaryBody({ def }: { def: any }) {
         {mons
           .filter((m) => m.overall_state !== "OK")
           .map((m) => (
-            <Link key={m.id} href={`/monitors/${m.id}`} className="flex items-center gap-2 py-1 hover:bg-[#eef2fc]">
+            <Link key={m.id} href={`/monitors/${m.id}`} className="flex items-center gap-2 py-1 hover:bg-brand-100">
               <StatusBadge state={m.overall_state} />
               <span className="truncate">{m.name}</span>
             </Link>
@@ -356,10 +357,14 @@ export function WidgetFrame({
     );
   }
   return (
-    <div className="card h-full flex flex-col group relative hover:border-[#c9cdd6]" data-testid="widget">
+    <div className={cardStyles({ className: "h-full flex flex-col group relative hover:border-line-strong" })} data-testid="widget">
       <div className="flex items-center gap-2 px-2.5 pt-2 pb-1 min-h-7">
         <div className="truncate flex-1" style={{ textAlign: def.title_align ?? "left" }}>
-          {def.title ? <span className="ws-title">{def.title}</span> : ""}
+          {def.title ? (
+            <span className="text-[13px] font-semibold text-ink underline decoration-dotted decoration-ink-3 underline-offset-[3px]">{def.title}</span>
+          ) : (
+            ""
+          )}
         </div>
         <div className={`flex gap-1.5 text-ink-3 ${editing ? "" : "opacity-0 group-hover:opacity-100"}`}>
           {onEdit && (

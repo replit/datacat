@@ -4,8 +4,9 @@ import { Link, useParams } from "wouter";
 import { Copy, Check, BookOpen } from "lucide-react";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/Layout";
+import { cardStyles, tableStyles } from "@/components/ui";
 
-const SECTIONS: { id: string; title: string; group: string }[] = [
+export const SECTIONS: { id: string; title: string; group: string }[] = [
   { id: "getting-started", title: "Getting started", group: "Start here" },
   { id: "agent", title: "DataCat Agent (servers & VMs)", group: "Add DataCat to your code" },
   { id: "nodejs", title: "Node.js", group: "Add DataCat to your code" },
@@ -45,7 +46,7 @@ const C = ({ children }: { children: ReactNode }) => (
 );
 const Steps = ({ children }: { children: ReactNode }) => <ol className="list-decimal pl-5 space-y-1.5 text-[13.5px] text-ink-2 my-2 max-w-3xl">{children}</ol>;
 const Note = ({ children }: { children: ReactNode }) => (
-  <div className="card bg-[#eef2fc] border-brand-100 p-3 text-[13px] text-ink-2 my-3 max-w-3xl">{children}</div>
+  <div className={cardStyles({ className: "bg-brand-100 border-brand-100 p-3 text-[13px] text-ink-2 my-3 max-w-3xl" })}>{children}</div>
 );
 
 export function Docs() {
@@ -76,7 +77,7 @@ export function Docs() {
                 <Link
                   key={s.id}
                   href={`/docs/${s.id}`}
-                  className={`block px-4 py-1.5 text-[13px] ${section === s.id ? "bg-brand-100 text-primary font-semibold" : "hover:bg-[#eef2fc]"}`}
+                  className={`block px-4 py-1.5 text-[13px] ${section === s.id ? "bg-brand-100 text-primary font-semibold" : "hover:bg-brand-100"}`}
                 >
                   {s.title}
                 </Link>
@@ -418,7 +419,7 @@ datacat-run python app.py`}</Code>
                 clients to <C>localhost:8125</C>; the DataCat Agent converts both to OpenTelemetry and forwards them.
               </P>
               <H3>Option B: switch libraries</H3>
-              <table className="tbl max-w-3xl my-3">
+              <table className={tableStyles({ className: "max-w-3xl my-3" })}>
                 <thead>
                   <tr>
                     <th>Datadog</th>
@@ -632,7 +633,7 @@ export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf`}</Code>
   -H "Content-Type: application/json" -d '{"title":"Deployed v1.4.2","text":"checkout","tags":["service:checkout"]}'`}</Code>
               <H3>Query & manage</H3>
               <div className="text-[13px] max-w-3xl">
-                <table className="tbl card">
+                <table className={tableStyles({ className: "bg-white border border-line rounded-lg" })}>
                   <thead>
                     <tr>
                       <th>Method & path</th>

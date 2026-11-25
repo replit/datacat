@@ -103,7 +103,7 @@ export function Facet({
       <div className="px-3 pb-1 text-[13px] font-semibold text-ink">{title}</div>
       {values.length === 0 && <div className="px-3 text-[11px] text-ink-3">No values</div>}
       {values.map((v) => (
-        <label key={v.value} className="flex items-center gap-2 px-3 py-[3px] text-[12px] hover:bg-[#f2f4fb] cursor-pointer">
+        <label key={v.value} className="flex items-center gap-2 px-3 py-[3px] text-[12px] hover:bg-brand-50 cursor-pointer">
           <input type="checkbox" checked={selected?.includes(v.value) ?? false} onChange={() => onToggle(v.value)} className="accent-primary" />
           <span className="flex-1 truncate" title={v.value}>
             {v.value}

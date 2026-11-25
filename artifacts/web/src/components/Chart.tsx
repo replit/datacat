@@ -88,44 +88,45 @@ export function TimeseriesChart({
     data,
     margin: { top: 6, right: 8, left: 0, bottom: 0 },
   };
-  const axes = (
-    <>
-      <CartesianGrid stroke="#eceef2" strokeDasharray="0" vertical={false} />
-      <XAxis
-        dataKey="t"
-        type="number"
-        scale="time"
-        domain={from && to ? [from * 1000, to * 1000] : ["dataMin", "dataMax"]}
-        tickFormatter={tickFmt}
-        tick={{ fontSize: 10, fill: "#7d8b96" }}
-        axisLine={{ stroke: "#e2e5ea" }}
-        tickLine={false}
-        minTickGap={40}
+  // An array rather than a fragment: recharts only finds direct children, and its fragment check misses React 19 elements.
+  const axes = [
+    <CartesianGrid key="grid" stroke="#eceef2" vertical={false} />,
+    <XAxis
+      key="x"
+      dataKey="t"
+      type="number"
+      scale="time"
+      domain={from && to ? [from * 1000, to * 1000] : ["dataMin", "dataMax"]}
+      tickFormatter={tickFmt}
+      tick={{ fontSize: 10, fill: "#7d8b96" }}
+      axisLine={{ stroke: "#e2e5ea" }}
+      tickLine={false}
+      minTickGap={40}
+    />,
+    <YAxis key="y" tickFormatter={(v) => yFormat(v)} tick={{ fontSize: 10, fill: "#7d8b96" }} axisLine={false} tickLine={false} width={52} />,
+    <Tooltip
+      key="tooltip"
+      isAnimationActive={false}
+      labelFormatter={(t) => fmtTime(Number(t), true)}
+      formatter={(v: any, name: any) => [yFormat(Number(v)), keys.find((k) => k.key === name)?.label ?? name]}
+      contentStyle={{ fontSize: 11, padding: "6px 8px", borderRadius: 4, border: "1px solid #e2e5ea" }}
+      itemStyle={{ padding: 0 }}
+    />,
+    thresholds?.map((th, i) => (
+      <ReferenceLine
+        key={i}
+        y={th.value}
+        stroke={th.color}
+        strokeDasharray="4 3"
+        label={th.label ? { value: th.label, fontSize: 10, fill: th.color, position: "insideTopRight" } : undefined}
       />
-      <YAxis tickFormatter={(v) => yFormat(v)} tick={{ fontSize: 10, fill: "#7d8b96" }} axisLine={false} tickLine={false} width={44} />
-      <Tooltip
-        isAnimationActive={false}
-        labelFormatter={(t) => fmtTime(Number(t), true)}
-        formatter={(v: any, name: any) => [yFormat(Number(v)), keys.find((k) => k.key === name)?.label ?? name]}
-        contentStyle={{ fontSize: 11, padding: "6px 8px", borderRadius: 4, border: "1px solid #e2e5ea" }}
-        itemStyle={{ padding: 0 }}
-      />
-      {thresholds?.map((th, i) => (
-        <ReferenceLine
-          key={i}
-          y={th.value}
-          stroke={th.color}
-          strokeDasharray="4 3"
-          label={th.label ? { value: th.label, fontSize: 10, fill: th.color, position: "insideTopRight" } : undefined}
-        />
-      ))}
-      {thresholds
-        ?.filter((t) => t.above !== undefined)
-        .map((th, i) => (
-          <ReferenceArea key={`a${i}`} y1={th.above ? th.value : undefined} y2={th.above ? undefined : th.value} fill={th.color} fillOpacity={0.06} />
-        ))}
-    </>
-  );
+    )),
+    thresholds
+      ?.filter((t) => t.above !== undefined)
+      .map((th, i) => (
+        <ReferenceArea key={`a${i}`} y1={th.above ? th.value : undefined} y2={th.above ? undefined : th.value} fill={th.color} fillOpacity={0.06} />
+      )),
+  ];
   return (
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height={showLegend ? "82%" : "100%"}>
