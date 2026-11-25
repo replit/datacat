@@ -6,11 +6,12 @@ every agent release. See `NOTICE` for code and definitions derived from third-pa
 
 ## Server and web UI (pnpm workspace, production)
 
-156 packages, bundled into the server and the web UI: MIT 128, ISC 20, BSD-3-Clause 4, Apache-2.0 2, MIT AND ISC 1, Unlicense 1
+157 packages, bundled into the server and the web UI: MIT 128, ISC 20, BSD-3-Clause 4, Apache-2.0 2, MIT AND ISC 1, OFL-1.1 1, Unlicense 1
 
 | Package | Version | License |
 | --- | --- | --- |
 | @babel/runtime | 7.29.10 | MIT |
+| @fontsource-variable/inter | 5.3.0 | OFL-1.1 |
 | @msgpack/msgpack | 3.1.3 | ISC |
 | @pinojs/redact | 0.4.0 | MIT |
 | @tanstack/query-core | 5.104.1 | MIT |

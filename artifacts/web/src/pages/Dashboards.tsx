@@ -3,13 +3,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useParams, useSearch } from "wouter";
 import { Plus, Search, Star, Pencil, Save, X, Settings2, Download, Upload, Trash2, LayoutGrid } from "lucide-react";
 import { api } from "@/lib/api";
-import { PageHeader, TABS, ICONS } from "@/components/Layout";
+import { PageHeader } from "@/components/Layout";
 import { useAuthUser } from "@/lib/auth";
 import { TimePicker } from "@/components/TimePicker";
 import { Modal, Empty } from "@/components/Panels";
 import { WidgetFrame, WidgetBody, WIDGET_TYPES, type WidgetDef } from "@/components/Widget";
 import { QueryList, type QDef, type FDef } from "@/components/QueryEditor";
 import { fmtAgo } from "@/lib/format";
+import { Button, Input, Select, Textarea, cardStyles, cn, fieldStyles, labelStyles, tableStyles } from "@/components/ui";
 
 const ROW_H = 92;
 
@@ -55,152 +56,144 @@ export function DashboardList() {
       nav(`/dashboard/${d.id}${d.widgets?.length ? "" : "?edit=1"}`);
     },
   });
-  const [preset, setPreset] = useState<string>("All Custom");
-  const [hide, setHide] = useState(false);
+  const [filter, setFilter] = useState("All");
   const { user } = useAuthUser();
   const views: Record<string, { t: number; n: number; title: string }> = JSON.parse(
     localStorage.getItem("datacat-views") ?? localStorage.getItem("dc-views") ?? "{}",
   );
   const all = list.data?.dashboards ?? [];
-  const maxViews = Math.max(1, ...Object.values(views).map((v) => v.n));
-  const presets: [string, (d: any) => boolean][] = [
-    ["All Custom", () => true],
-    ["Created By You", (d) => !!user && [user.firstName, user.email, [user.firstName, user.lastName].filter(Boolean).join(" ")].includes(d.author_name)],
+  const mine = (d: any) => !!user && [user.firstName, user.email, [user.firstName, user.lastName].filter(Boolean).join(" ")].includes(d.author_name);
+  const filters: [string, (d: any) => boolean][] = [
+    ["All", () => true],
     ["Favorites", (d) => favs.includes(d.id)],
-    ["Recently Viewed", (d) => !!views[d.id]],
+    ["Created by me", mine],
+    ["Recently viewed", (d) => !!views[d.id]],
   ];
-  const pf = presets.find((p) => p[0] === preset)?.[1] ?? (() => true);
-  const rows = all.filter((d) => pf(d) && d.title.toLowerCase().includes(q.toLowerCase()));
-  rows.sort((a, b) => Number(favs.includes(b.id)) - Number(favs.includes(a.id)) || new Date(b.modified_at).getTime() - new Date(a.modified_at).getTime());
+  const ff = filters.find((f) => f[0] === filter)?.[1] ?? (() => true);
+  const rows = all.filter((d) => ff(d) && `${d.title} ${d.description ?? ""} ${d.author_name ?? ""}`.toLowerCase().includes(q.toLowerCase()));
+  if (filter === "Recently viewed") rows.sort((a, b) => views[b.id].t - views[a.id].t);
   const recent = all
     .filter((d) => views[d.id])
     .sort((a, b) => views[b.id].t - views[a.id].t)
     .slice(0, 4);
-  const pop = (id: string) => Math.max(1, Math.ceil(((views[id]?.n ?? 0) / maxViews) * 5));
+  const toggleFav = (id: string) => setFavs(favs.includes(id) ? favs.filter((x) => x !== id) : [...favs, id]);
   return (
     <div className="min-h-full">
-      <PageHeader title="Dashboards" icon={ICONS.dash} tabs={TABS.dash}>
-        <button className="btn" onClick={() => setImporting(true)}>
+      <PageHeader title="Dashboards">
+        <Button onClick={() => setImporting(true)}>
           <Upload size={14} /> Import JSON
-        </button>
-        <button className="btn-primary" onClick={() => setCreating(true)} data-testid="new-dashboard">
+        </Button>
+        <Button variant="primary" onClick={() => setCreating(true)} data-testid="new-dashboard">
           <Plus size={14} /> New Dashboard
-        </button>
+        </Button>
       </PageHeader>
-      <div className="px-5 pt-3">
-        <div className="relative">
-          <Search size={14} className="absolute left-2.5 top-2 text-ink-3" />
-          <input className="input w-full pl-8" placeholder="Search dashboards" value={q} onChange={(e) => setQ(e.target.value)} />
-        </div>
-        <button className="text-[12px] text-primary mt-2 mb-1" onClick={() => setHide(!hide)}>
-          {hide ? "Show Controls" : "Hide Controls"}
-        </button>
-      </div>
-      <div className="flex gap-5 px-5 pb-6">
-        {!hide && (
-          <aside className="w-56 shrink-0 pt-1">
-            <div className="text-[12px] font-semibold text-ink mb-1 mt-2">Preset Lists</div>
-            {presets.map(([p]) => (
-              <button
-                key={p}
-                onClick={() => setPreset(p)}
-                className={`w-full flex items-center gap-2 px-1.5 h-7 rounded-[3px] text-[13px] text-left ${preset === p ? "bg-[#eef2fc] text-primary font-semibold" : "text-ink hover:bg-[#f4f5f8]"}`}
-              >
-                <Star size={13} className="text-ink-3" />
-                {p}
-                <span className="ml-auto text-[11px] text-ink-3">{all.filter(presets.find((x) => x[0] === p)![1]).length}</span>
-              </button>
-            ))}
-          </aside>
+      <div className="px-6 py-5 space-y-6">
+        {recent.length > 0 && !q && filter === "All" && (
+          <section>
+            <h2 className="text-[13px] font-semibold text-ink-2 mb-2">Recently viewed</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {recent.map((d) => (
+                <Link
+                  key={d.id}
+                  href={`/dashboard/${d.id}`}
+                  className={cardStyles({ className: "p-3.5 hover:border-brand-400 hover:shadow-sm transition-shadow" })}
+                >
+                  <div className="flex items-center gap-2">
+                    <LayoutGrid size={15} className="text-primary shrink-0" />
+                    <span className="text-[14px] font-medium truncate">{d.title}</span>
+                  </div>
+                  <div className="text-[12px] text-ink-3 mt-1.5 truncate">
+                    {d.widget_count} widgets · viewed {fmtAgo(views[d.id].t)}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
-        <div className="flex-1 min-w-0">
-          {recent.length > 0 && !q && (
-            <>
-              <h2 className="text-[20px] font-semibold mt-2 mb-2">Recently Viewed</h2>
-              <div className="grid grid-cols-4 gap-3 mb-5">
-                {recent.map((d) => (
-                  <Link key={d.id} href={`/dashboard/${d.id}`} className="card hover:border-[#b9c3dd] flex flex-col">
-                    <div className="p-3 flex-1">
-                      <div className="flex items-start gap-1.5">
-                        <Star size={14} className={`mt-0.5 shrink-0 ${favs.includes(d.id) ? "fill-accent text-accent" : "text-ink-3"}`} />
-                        <span className="text-[15px] font-medium leading-tight">{d.title}</span>
-                      </div>
-                      <div className="text-[12px] text-ink-3 mt-1">Viewed {fmtAgo(views[d.id].t)}</div>
-                    </div>
-                    <div className="flex items-center gap-1.5 px-3 h-8 border-t border-line text-[11px] text-ink-2 bg-[#fafbfc]">
-                      <Avatar name={d.author_name} />
-                      Created by {d.author_name || "unknown"}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </>
-          )}
-          <h2 className="text-[20px] font-semibold mt-2 mb-2">{preset === "All Custom" ? "All Dashboards" : preset}</h2>
-          <div className="text-[12px] text-ink-2 mb-1">{rows.length ? `1–${rows.length} of ${rows.length} dashboards` : "0 dashboards"}</div>
+        <section>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-subtle border border-line">
+              {filters.map(([f, fn]) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={cn(
+                    "h-7 px-3 rounded-md text-[13px] flex items-center gap-1.5 transition-colors",
+                    filter === f ? "bg-white text-ink font-medium shadow-sm" : "text-ink-2 hover:text-ink",
+                  )}
+                >
+                  {f}
+                  <span className="text-[11px] text-ink-3">{all.filter(fn).length}</span>
+                </button>
+              ))}
+            </div>
+            <div className="relative ml-auto w-72">
+              <Search size={14} className="absolute left-2.5 top-2 text-ink-3" />
+              <Input className="w-full pl-8" placeholder="Search by name, description or owner" value={q} onChange={(e) => setQ(e.target.value)} />
+            </div>
+          </div>
           {rows.length === 0 && !list.isLoading ? (
-            <Empty title="No dashboards yet">Create a dashboard to graph metrics from your hosts, services and logs.</Empty>
+            <div className={cardStyles()}>
+              {all.length === 0 ? (
+                <Empty title="No dashboards yet">Create a dashboard to graph metrics from your hosts, services and logs.</Empty>
+              ) : (
+                <Empty title="Nothing here">{filter === "Favorites" ? "Star a dashboard to pin it here." : "No dashboards match this filter."}</Empty>
+              )}
+            </div>
           ) : (
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th className="w-6">
-                    <input type="checkbox" className="accent-primary" disabled />
-                  </th>
-                  <th className="w-6">
-                    <Star size={12} className="fill-ink-3 text-ink-3" />
-                  </th>
-                  <th>Name</th>
-                  <th>Author</th>
-                  <th>Widgets</th>
-                  <th>Popularity</th>
-                  <th>Modified</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((d) => (
-                  <tr key={d.id}>
-                    <td>
-                      <input type="checkbox" className="accent-primary" />
-                    </td>
-                    <td>
-                      <button onClick={() => setFavs(favs.includes(d.id) ? favs.filter((x) => x !== d.id) : [...favs, d.id])} aria-label="Favorite">
-                        <Star size={14} className={favs.includes(d.id) ? "fill-accent text-accent" : "text-ink-3"} />
-                      </button>
-                    </td>
-                    <td>
-                      <Link href={`/dashboard/${d.id}`} className="text-ink hover:text-primary hover:underline">
-                        {d.title}
-                      </Link>
-                    </td>
-                    <td className="text-ink-2">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Avatar name={d.author_name} />
-                        {d.author_name}
-                      </span>
-                    </td>
-                    <td className="text-ink-2">{d.widget_count}</td>
-                    <td>
-                      <span className="inline-flex gap-[2px] items-end h-3" title={`${views[d.id]?.n ?? 0} views`}>
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <span key={i} className={`w-[3px] h-3 rounded-[1px] ${i <= pop(d.id) ? "bg-[#4f7be0]" : "bg-[#d9dde5]"}`} />
-                        ))}
-                      </span>
-                    </td>
-                    <td className="text-ink-2 leading-tight py-1">
-                      <div>{fmtAgo(new Date(d.modified_at).getTime())}</div>
-                      {d.created_at && (
-                        <div className="text-[11px] text-ink-3">
-                          Created {new Date(d.created_at).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
-                        </div>
-                      )}
-                    </td>
+            <div className={cardStyles({ className: "overflow-hidden" })}>
+              <table className={tableStyles({ className: "[&_td]:h-[52px] [&_th]:bg-panel" })}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th className="w-48">Owner</th>
+                    <th className="w-24">Widgets</th>
+                    <th className="w-36">Last modified</th>
+                    <th className="w-12" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((d) => {
+                    const fav = favs.includes(d.id);
+                    return (
+                      <tr key={d.id} className="group cursor-pointer" onClick={() => nav(`/dashboard/${d.id}`)}>
+                        <td>
+                          <Link href={`/dashboard/${d.id}`} className="block min-w-0" onClick={(e) => e.stopPropagation()}>
+                            <div className="text-ink font-medium group-hover:text-primary truncate">{d.title}</div>
+                            {d.description && <div className="text-[12px] text-ink-3 truncate">{d.description}</div>}
+                          </Link>
+                        </td>
+                        <td className="text-ink-2">
+                          <span className="inline-flex items-center gap-2">
+                            <Avatar name={d.author_name} />
+                            <span className="truncate">{d.author_name || "Unknown"}</span>
+                          </span>
+                        </td>
+                        <td className="text-ink-2">{d.widget_count}</td>
+                        <td className="text-ink-2" title={new Date(d.modified_at).toLocaleString()}>
+                          {fmtAgo(new Date(d.modified_at).getTime())}
+                        </td>
+                        <td className="text-right">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFav(d.id);
+                            }}
+                            aria-label={fav ? "Remove from favorites" : "Add to favorites"}
+                            title={fav ? "Remove from favorites" : "Add to favorites"}
+                            className={cn("p-1 rounded hover:bg-subtle", fav ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus:opacity-100")}
+                          >
+                            <Star size={15} className={fav ? "fill-accent text-accent" : "text-ink-3"} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
-        </div>
+        </section>
       </div>
       <Modal
         open={creating}
@@ -209,25 +202,23 @@ export function DashboardList() {
         width={520}
         footer={
           <>
-            <button className="btn" onClick={() => setCreating(false)}>
-              Cancel
-            </button>
-            <button
-              className="btn-primary"
+            <Button onClick={() => setCreating(false)}>Cancel</Button>
+            <Button
+              variant="primary"
               disabled={!title}
               onClick={() => create.mutate({ title, layout_type: "ordered", widgets: [] })}
               data-testid="create-dashboard"
             >
               New Dashboard
-            </button>
+            </Button>
           </>
         }
       >
         <div className="p-5 space-y-2">
-          <label className="label">Dashboard name</label>
-          <input
+          <label className={labelStyles()}>Dashboard name</label>
+          <Input
             autoFocus
-            className="input w-full"
+            className="w-full"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Web tier overview"
@@ -243,11 +234,9 @@ export function DashboardList() {
         width={720}
         footer={
           <>
-            <button className="btn" onClick={() => setImporting(false)}>
-              Cancel
-            </button>
-            <button
-              className="btn-primary"
+            <Button onClick={() => setImporting(false)}>Cancel</Button>
+            <Button
+              variant="primary"
               onClick={() => {
                 try {
                   const j = JSON.parse(json);
@@ -264,7 +253,7 @@ export function DashboardList() {
               }}
             >
               Import
-            </button>
+            </Button>
           </>
         }
       >
@@ -272,7 +261,7 @@ export function DashboardList() {
           <p className="text-ink-2 mb-2">
             Paste a dashboard definition (JSON with <span className="mono">widgets</span> and <span className="mono">template_variables</span>).
           </p>
-          <textarea className="input w-full h-80 mono text-xs py-2" value={json} onChange={(e) => setJson(e.target.value)} />
+          <Textarea className="w-full h-80 mono text-xs py-2" value={json} onChange={(e) => setJson(e.target.value)} />
         </div>
       </Modal>
     </div>
@@ -441,17 +430,15 @@ export function WidgetEditor({ initial, onSave, onClose }: { initial: WidgetDef 
       width={1080}
       footer={
         <>
-          <button className="btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="btn-primary" onClick={save} data-testid="save-widget">
+          <Button onClick={onClose}>Cancel</Button>
+          <Button variant="primary" onClick={save} data-testid="save-widget">
             Save
-          </button>
+          </Button>
         </>
       }
     >
       <div className="bg-panel border-b border-line p-4">
-        <div className="card p-2 h-[230px] flex flex-col">
+        <div className={cardStyles({ className: "p-2 h-[230px] flex flex-col" })}>
           <div className="text-[13px] font-medium px-1 pb-1">{title || (WIDGET_TYPES.find((t) => t.type === type)?.label ?? "")}</div>
           <div className="flex-1 min-h-0">
             {type === "group" ? (
@@ -465,15 +452,15 @@ export function WidgetEditor({ initial, onSave, onClose }: { initial: WidgetDef 
       <div className="p-5 space-y-6">
         <section>
           <div className="text-[15px] font-semibold mb-2.5 flex items-center">
-            <span className="inline-flex w-6 h-6 rounded-full bg-[#e9ebf0] text-ink text-[12px] font-bold items-center justify-center mr-2.5">1</span>Select
-            your visualization
+            <span className="inline-flex w-6 h-6 rounded-full bg-subtle text-ink text-[12px] font-bold items-center justify-center mr-2.5">1</span>Select your
+            visualization
           </div>
           <div className="flex flex-wrap gap-2">
             {WIDGET_TYPES.map((t) => (
               <button
                 key={t.type}
                 onClick={() => setType(t.type)}
-                className={`px-3 h-9 rounded-[3px] border text-[13px] ${type === t.type ? "border-primary bg-[#eef2fc] text-primary font-semibold" : "border-[#cfd3da] hover:bg-[#f4f5f8]"}`}
+                className={`px-3 h-9 rounded-[3px] border text-[13px] ${type === t.type ? "border-primary bg-brand-100 text-primary font-semibold" : "border-line-strong hover:bg-canvas"}`}
                 data-testid={`viz-${t.type}`}
               >
                 {t.label}
@@ -483,7 +470,7 @@ export function WidgetEditor({ initial, onSave, onClose }: { initial: WidgetDef 
         </section>
         <section>
           <div className="text-[15px] font-semibold mb-2.5 flex items-center">
-            <span className="inline-flex w-6 h-6 rounded-full bg-[#e9ebf0] text-ink text-[12px] font-bold items-center justify-center mr-2.5">2</span>
+            <span className="inline-flex w-6 h-6 rounded-full bg-subtle text-ink text-[12px] font-bold items-center justify-center mr-2.5">2</span>
             {type === "note" ? "Write your note" : "Graph your data"}
           </div>
           {isMetric && (
@@ -497,77 +484,77 @@ export function WidgetEditor({ initial, onSave, onClose }: { initial: WidgetDef 
             />
           )}
           {type === "note" && (
-            <textarea className="input w-full h-32 py-2" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Markdown-style text" />
+            <Textarea className="w-full h-32 py-2" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Markdown-style text" />
           )}
           {(type === "list_stream" || type === "manage_status") && (
-            <input
-              className="input w-full mono text-xs"
+            <Input
+              className="w-full mono text-xs"
               value={logQuery}
               onChange={(e) => setLogQuery(e.target.value)}
               placeholder={type === "list_stream" ? "service:web status:error" : "monitor name filter"}
             />
           )}
           {type === "group" && (
-            <select className="input" value={color} onChange={(e) => setColor(e.target.value)}>
+            <Select value={color} onChange={(e) => setColor(e.target.value)}>
               {["vivid_purple", "vivid_blue", "vivid_green", "vivid_orange", "vivid_pink", "vivid_yellow", "purple", "blue", "green", "gray"].map((c) => (
                 <option key={c} value={c}>
                   {c.replace("_", " ")}
                 </option>
               ))}
-            </select>
+            </Select>
           )}
         </section>
         <section>
           <div className="text-[15px] font-semibold mb-2.5 flex items-center">
-            <span className="inline-flex w-6 h-6 rounded-full bg-[#e9ebf0] text-ink text-[12px] font-bold items-center justify-center mr-2.5">3</span>Set
-            display preferences
+            <span className="inline-flex w-6 h-6 rounded-full bg-subtle text-ink text-[12px] font-bold items-center justify-center mr-2.5">3</span>Set display
+            preferences
           </div>
           <div className="flex flex-wrap gap-4 items-end">
             {type === "timeseries" && (
               <>
                 <div>
-                  <div className="label mb-1">Display</div>
-                  <select className="input" value={display} onChange={(e) => setDisplay(e.target.value)}>
+                  <div className={labelStyles({ className: "mb-1" })}>Display</div>
+                  <Select value={display} onChange={(e) => setDisplay(e.target.value)}>
                     <option value="line">Lines</option>
                     <option value="area">Areas</option>
                     <option value="bars">Bars</option>
-                  </select>
+                  </Select>
                 </div>
                 <div>
-                  <div className="label mb-1">Palette</div>
-                  <select className="input" value={palette} onChange={(e) => setPalette(e.target.value)}>
+                  <div className={labelStyles({ className: "mb-1" })}>Palette</div>
+                  <Select value={palette} onChange={(e) => setPalette(e.target.value)}>
                     <option value="classic">Classic</option>
                     <option value="cool">Cool</option>
                     <option value="warm">Warm</option>
-                  </select>
+                  </Select>
                 </div>
               </>
             )}
             {type !== "timeseries" && isMetric && (
               <div>
-                <div className="label mb-1">Aggregate by</div>
-                <select className="input" value={aggregator} onChange={(e) => setAggregator(e.target.value)}>
+                <div className={labelStyles({ className: "mb-1" })}>Aggregate by</div>
+                <Select value={aggregator} onChange={(e) => setAggregator(e.target.value)}>
                   {["avg", "sum", "min", "max", "last"].map((a) => (
                     <option key={a}>{a}</option>
                   ))}
-                </select>
+                </Select>
               </div>
             )}
             {type === "query_value" && (
               <>
                 <div>
-                  <div className="label mb-1">Yellow above</div>
-                  <input className="input w-24" value={condWarn} onChange={(e) => setCondWarn(e.target.value)} />
+                  <div className={labelStyles({ className: "mb-1" })}>Yellow above</div>
+                  <Input className="w-24" value={condWarn} onChange={(e) => setCondWarn(e.target.value)} />
                 </div>
                 <div>
-                  <div className="label mb-1">Red above</div>
-                  <input className="input w-24" value={condCrit} onChange={(e) => setCondCrit(e.target.value)} />
+                  <div className={labelStyles({ className: "mb-1" })}>Red above</div>
+                  <Input className="w-24" value={condCrit} onChange={(e) => setCondCrit(e.target.value)} />
                 </div>
               </>
             )}
             {type !== "group" && (
               <div>
-                <div className="label mb-1">Size</div>
+                <div className={labelStyles({ className: "mb-1" })}>Size</div>
                 <div className="flex">
                   {Object.keys(SIZES).map((s) => (
                     <button
@@ -586,16 +573,9 @@ export function WidgetEditor({ initial, onSave, onClose }: { initial: WidgetDef 
         {type !== "note" && (
           <section>
             <div className="text-[15px] font-semibold mb-2.5 flex items-center">
-              <span className="inline-flex w-6 h-6 rounded-full bg-[#e9ebf0] text-ink text-[12px] font-bold items-center justify-center mr-2.5">4</span>Graph
-              title
+              <span className="inline-flex w-6 h-6 rounded-full bg-subtle text-ink text-[12px] font-bold items-center justify-center mr-2.5">4</span>Graph title
             </div>
-            <input
-              className="input w-full max-w-lg"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Add a title"
-              data-testid="widget-title"
-            />
+            <Input className="w-full max-w-lg" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add a title" data-testid="widget-title" />
           </section>
         )}
       </div>
@@ -693,18 +673,11 @@ export function DashboardView() {
     return [...new Set(all.filter((t) => t.startsWith(prefix + ":")).map((t) => t.slice(prefix.length + 1)))];
   };
   return (
-    <div className="min-h-full bg-canvas">
+    <div className="min-h-full">
       <div className="flex flex-wrap items-center gap-2 px-5 py-2 min-h-[50px] border-b border-line bg-white sticky top-0 z-20">
         <div className="flex flex-[1_1_18rem] min-w-0 items-center gap-2">
-          <button onClick={() => toggleFav(id)} title="Favorite" className="shrink-0 text-ink-3 hover:text-accent">
-            <Star size={17} className={isFav ? "fill-accent text-accent" : ""} />
-          </button>
           {editing ? (
-            <input
-              className="input text-[16px] font-semibold min-w-0 w-96"
-              value={draft.title}
-              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-            />
+            <Input className="text-[16px] font-semibold min-w-0 w-96" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
           ) : (
             <h1 className="text-[18px] font-semibold truncate shrink-0 max-w-[calc(100%-25px)]" title={draft.title}>
               {draft.title}
@@ -719,35 +692,34 @@ export function DashboardView() {
         <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-1.5 whitespace-nowrap">
           {editing ? (
             <>
-              <button
-                className="btn"
+              <Button
                 onClick={() => {
                   setDraft(structuredClone(dq.data));
                   setEditing(false);
                 }}
               >
                 <X size={14} /> Cancel
-              </button>
-              <button className="btn" onClick={() => setEditIdx("new")} data-testid="add-widget">
+              </Button>
+              <Button onClick={() => setEditIdx("new")} data-testid="add-widget">
                 <Plus size={14} /> Add Widget
-              </button>
-              <button className="btn-primary" onClick={() => save.mutate(draft)} disabled={save.isPending} data-testid="save-dashboard">
+              </Button>
+              <Button variant="primary" onClick={() => save.mutate(draft)} disabled={save.isPending} data-testid="save-dashboard">
                 <Save size={14} /> Save
-              </button>
+              </Button>
             </>
           ) : (
             <>
-              <button className="btn !border-transparent" title="Export JSON" onClick={() => setShowJson(true)}>
+              <Button className="border-transparent" title="Export JSON" onClick={() => setShowJson(true)}>
                 <Download size={14} /> Export
-              </button>
-              <button className="btn !border-transparent" title="Settings" onClick={() => setSettings(true)}>
+              </Button>
+              <Button className="border-transparent" title="Settings" onClick={() => setSettings(true)}>
                 <Settings2 size={14} /> Configure
-              </button>
-              <button className="btn" onClick={() => setEditing(true)} data-testid="edit-dashboard">
+              </Button>
+              <Button onClick={() => setEditing(true)} data-testid="edit-dashboard">
                 <Pencil size={14} /> Edit Widgets
-              </button>
-              <button
-                className="btn-primary"
+              </Button>
+              <Button
+                variant="primary"
                 onClick={() => {
                   setEditing(true);
                   setEditIdx("new");
@@ -755,7 +727,7 @@ export function DashboardView() {
                 data-testid="add-widgets"
               >
                 <Plus size={14} /> Add Widgets
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -766,7 +738,7 @@ export function DashboardView() {
           <label key={t.name} className="flex flex-col gap-0.5 text-[11px] text-ink-2">
             <span className="px-0.5">{t.name}</span>
             <select
-              className={`input !h-7 w-40 text-[12px] ${(vars[t.name] ?? "*") !== "*" ? "!border-primary !bg-[#f3f6fd]" : ""}`}
+              className={fieldStyles({ className: cn("h-7 w-40 text-[12px]", (vars[t.name] ?? "*") !== "*" && "border-primary bg-brand-50") })}
               value={vars[t.name] ?? "*"}
               onChange={(e) => setVars({ ...vars, [t.name]: e.target.value })}
               data-testid={`tv-${t.name}`}
@@ -802,12 +774,12 @@ export function DashboardView() {
       )}
       <div className="p-4">
         {widgets.length === 0 ? (
-          <div className="card p-10 text-center">
+          <div className={cardStyles({ className: "p-10 text-center" })}>
             <LayoutGrid size={28} className="mx-auto text-brand-400 mb-2" />
             <div className="font-semibold mb-1">Add your first widget</div>
             <div className="text-ink-2 mb-3">Graph metrics, show top lists, values, logs, or monitor status.</div>
-            <button
-              className="btn-primary"
+            <Button
+              variant="primary"
               onClick={() => {
                 setEditing(true);
                 setEditIdx("new");
@@ -815,7 +787,7 @@ export function DashboardView() {
               data-testid="add-first-widget"
             >
               <Plus size={14} /> Add Widget
-            </button>
+            </Button>
           </div>
         ) : (
           <Grid
@@ -890,40 +862,34 @@ export function DashboardView() {
         width={620}
         footer={
           <>
-            <button className="btn text-alert" onClick={() => confirm("Delete this dashboard?") && del.mutate()}>
+            <Button className="text-alert" onClick={() => confirm("Delete this dashboard?") && del.mutate()}>
               <Trash2 size={14} /> Delete dashboard
-            </button>
+            </Button>
             <div className="flex-1" />
-            <button className="btn" onClick={() => setSettings(false)}>
-              Close
-            </button>
-            <button
-              className="btn-primary"
+            <Button onClick={() => setSettings(false)}>Close</Button>
+            <Button
+              variant="primary"
               onClick={() => {
                 save.mutate(draft);
                 setSettings(false);
               }}
             >
               Save
-            </button>
+            </Button>
           </>
         }
       >
         <div className="p-5 space-y-4">
           <div>
-            <div className="label mb-1">Description</div>
-            <textarea
-              className="input w-full h-20 py-2"
-              value={draft.description ?? ""}
-              onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-            />
+            <div className={labelStyles({ className: "mb-1" })}>Description</div>
+            <Textarea className="w-full h-20 py-2" value={draft.description ?? ""} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
           </div>
           <div>
-            <div className="label mb-1">Template variables</div>
+            <div className={labelStyles({ className: "mb-1" })}>Template variables</div>
             {(draft.template_variables ?? []).map((t: any, i: number) => (
               <div key={i} className="flex gap-2 mb-2">
-                <input
-                  className="input w-32"
+                <Input
+                  className="w-32"
                   value={t.name}
                   placeholder="name"
                   onChange={(e) =>
@@ -933,8 +899,8 @@ export function DashboardView() {
                     })
                   }
                 />
-                <input
-                  className="input w-32"
+                <Input
+                  className="w-32"
                   value={t.prefix ?? ""}
                   placeholder="tag key"
                   onChange={(e) =>
@@ -944,8 +910,8 @@ export function DashboardView() {
                     })
                   }
                 />
-                <input
-                  className="input w-32"
+                <Input
+                  className="w-32"
                   value={t.default ?? ""}
                   placeholder="default"
                   onChange={(e) =>
@@ -955,20 +921,20 @@ export function DashboardView() {
                     })
                   }
                 />
-                <button
-                  className="btn !px-2"
+                <Button
+                  className="px-2"
                   onClick={() => setDraft({ ...draft, template_variables: draft.template_variables.filter((_: any, j: number) => j !== i) })}
                 >
                   <Trash2 size={14} />
-                </button>
+                </Button>
               </div>
             ))}
-            <button
-              className="btn btn-sm"
+            <Button
+              size="sm"
               onClick={() => setDraft({ ...draft, template_variables: [...(draft.template_variables ?? []), { name: "host", prefix: "host", default: "*" }] })}
             >
               <Plus size={12} /> Add variable
-            </button>
+            </Button>
             <p className="text-xs text-ink-3 mt-1">
               Use <span className="mono">$name</span> in a query filter, e.g. <span className="mono">{"avg:system.cpu.user{$host}"}</span>.
             </p>

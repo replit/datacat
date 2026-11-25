@@ -3,13 +3,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearch } from "wouter";
 import { Search, Plus, Trash2, Copy, Eye, EyeOff, LayoutDashboard, Server, Bell, ScrollText, Activity, LineChart } from "lucide-react";
 import { api } from "@/lib/api";
-import { PageHeader, ICONS } from "@/components/Layout";
+import { PageHeader } from "@/components/Layout";
 import { TimePicker } from "@/components/TimePicker";
 import { StatusBadge, Empty } from "@/components/Panels";
 import { CatMark } from "@/components/Logo";
 import { useTime } from "@/lib/time";
 import { useAuthUser } from "@/lib/auth";
 import { fmtAgo, fmtTime, fmtNum, fmtDuration } from "@/lib/format";
+import { Alert, Button, Field, Input, Select, badgeStyles, buttonStyles, cardStyles, labelStyles, sectionTitleStyles, tableStyles } from "@/components/ui";
 
 export function Events() {
   const { from, to, tick } = useTime();
@@ -21,18 +22,18 @@ export function Events() {
   const color: Record<string, string> = { error: "#d33b4c", warning: "#e8a317", success: "#2ca05a", info: "#5b7be0" };
   return (
     <div>
-      <PageHeader title="Events" icon={ICONS.events}>
+      <PageHeader title="Events">
         <TimePicker />
       </PageHeader>
       <div className="p-6">
         <div className="relative mb-3 max-w-xl">
           <Search size={14} className="absolute left-2.5 top-2.5 text-ink-3" />
-          <input className="input w-full pl-8" placeholder="Search events" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input className="w-full pl-8" placeholder="Search events" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         {(ev.data?.events.length ?? 0) === 0 && !ev.isLoading ? (
           <Empty title="No events in this time range">Monitor state changes, agent events and events sent to the API appear here.</Empty>
         ) : (
-          <div className="card divide-y divide-line">
+          <div className={cardStyles({ className: "divide-y divide-line" })}>
             {ev.data?.events.map((e) => (
               <div key={e.id} className="flex gap-3 px-4 py-2.5">
                 <span className="w-1 rounded shrink-0" style={{ background: color[e.alert_type] ?? "#5b7be0" }} />
@@ -48,9 +49,9 @@ export function Events() {
                   </div>
                   {e.text && <div className="text-xs text-ink-2 whitespace-pre-wrap mt-0.5 line-clamp-3">{e.text}</div>}
                   <div className="flex gap-1 mt-1">
-                    <span className="chip">source:{e.source}</span>
+                    <span className={badgeStyles()}>source:{e.source}</span>
                     {e.tags.slice(0, 6).map((t: string) => (
-                      <span key={t} className="chip">
+                      <span key={t} className={badgeStyles()}>
                         {t}
                       </span>
                     ))}
@@ -134,14 +135,14 @@ export function OrgSettings() {
   ];
   return (
     <div className="h-full flex flex-col">
-      <PageHeader title="Organization Settings" sub={org.data?.org?.name} />
+      <PageHeader title="Organization Settings" />
       <div className="flex flex-1 min-h-0">
         <aside className="w-56 border-r border-line bg-panel py-3">
           {tabs.map(([k, l]) => (
             <button
               key={k}
               onClick={() => setTab(k)}
-              className={`block w-full text-left px-4 py-1.5 text-[13px] ${tab === k ? "bg-brand-100 text-primary font-semibold" : "hover:bg-[#eef2fc]"}`}
+              className={`block w-full text-left px-4 py-1.5 text-[13px] ${tab === k ? "bg-brand-100 text-primary font-semibold" : "hover:bg-brand-100"}`}
             >
               {l}
             </button>
@@ -149,7 +150,7 @@ export function OrgSettings() {
         </aside>
         <div className="flex-1 overflow-auto p-6">
           {err && (
-            <div className="card bg-red-50 border-alert/30 text-alert p-2 text-xs mb-3" onClick={() => setErr(null)}>
+            <div className={cardStyles({ className: "bg-red-50 border-alert/30 text-alert p-2 text-xs mb-3" })} onClick={() => setErr(null)}>
               {err}
             </div>
           )}
@@ -167,30 +168,30 @@ export function OrgSettings() {
                     </p>
                     {isAdmin && (
                       <>
-                        <input
-                          className="input ml-auto w-56"
+                        <Input
+                          className="ml-auto w-56"
                           placeholder="Key name (optional)"
                           aria-label="New key name"
                           value={keyName}
                           onChange={(e) => setKeyName(e.target.value)}
                           maxLength={100}
                         />
-                        <button className="btn-primary ml-2" onClick={() => addKey.mutate(kind)} data-testid={`new-${kind}-key`}>
+                        <Button variant="primary" className="ml-2" onClick={() => addKey.mutate(kind)} data-testid={`new-${kind}-key`}>
                           <Plus size={14} /> New Key
-                        </button>
+                        </Button>
                       </>
                     )}
                   </div>
                   {!isAdmin && <p className="text-xs text-ink-3 mb-3">Only admins can create, view or revoke keys.</p>}
                   {created?.kind === kind && (
-                    <div className="card bg-panel p-3 mb-3 text-xs" data-testid="new-key-banner">
+                    <div className={cardStyles({ className: "bg-panel p-3 mb-3 text-xs" })} data-testid="new-key-banner">
                       <div className="font-semibold mb-1">
                         {kind === "app" ? "Copy your new application key now. It will not be shown again." : "New API key created."}
                       </div>
                       <KeyCell k={created.key} />
                     </div>
                   )}
-                  <table className="tbl card">
+                  <table className={tableStyles({ className: "bg-white border border-line rounded-lg" })}>
                     <thead>
                       <tr>
                         <th>Name</th>
@@ -228,8 +229,8 @@ export function OrgSettings() {
           {tab === "users" && (
             <div className="space-y-6">
               {isAdmin && (
-                <div className="card p-4">
-                  <div className="section-title mb-1">Invite a tester</div>
+                <div className={cardStyles({ className: "p-4" })}>
+                  <div className={sectionTitleStyles({ className: "mb-1" })}>Invite a tester</div>
                   <p className="text-xs text-ink-2 mb-2">
                     Share an invite link so a new member can create their password and join this organization. Links expire after 30 days and can only be used
                     once.
@@ -241,23 +242,23 @@ export function OrgSettings() {
                       invite.mutate(email);
                     }}
                   >
-                    <input
-                      className="input w-80"
+                    <Input
+                      className="w-80"
                       type="email"
                       placeholder="name@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       data-testid="invite-email"
                     />
-                    <button className="btn-primary" disabled={!email}>
+                    <Button variant="primary" disabled={!email}>
                       Send invite
-                    </button>
+                    </Button>
                   </form>
                 </div>
               )}
               <div>
-                <div className="section-title mb-2">Users ({org.data?.members?.length ?? 0})</div>
-                <table className="tbl card">
+                <div className={sectionTitleStyles({ className: "mb-2" })}>Users ({org.data?.members?.length ?? 0})</div>
+                <table className={tableStyles({ className: "bg-white border border-line rounded-lg" })}>
                   <thead>
                     <tr>
                       <th>Name</th>
@@ -280,8 +281,8 @@ export function OrgSettings() {
               </div>
               {(org.data?.invites ?? []).length > 0 && (
                 <div>
-                  <div className="section-title mb-2">Pending invites</div>
-                  <table className="tbl card">
+                  <div className={sectionTitleStyles({ className: "mb-2" })}>Pending invites</div>
+                  <table className={tableStyles({ className: "bg-white border border-line rounded-lg" })}>
                     <thead>
                       <tr>
                         <th>Email</th>
@@ -321,8 +322,8 @@ export function OrgSettings() {
             </div>
           )}
           {tab === "sample" && (
-            <div className="card p-5 max-w-2xl space-y-3">
-              <div className="section-title">Sample data</div>
+            <div className={cardStyles({ className: "p-5 max-w-2xl space-y-3" })}>
+              <div className={sectionTitleStyles()}>Sample data</div>
               <p className="text-ink-2">
                 Simulates four hosts and three services (storefront, checkout-api, payments) sending metrics, logs and traces through the same intake the agent
                 uses, for two hours, with 30 minutes of history. Useful for exploring DataCat before installing an agent. Sample data is tagged{" "}
@@ -340,23 +341,23 @@ export function OrgSettings() {
               {!isAdmin && <p className="text-xs text-ink-3">Only admins can add or remove channels.</p>}
               <form
                 hidden={!isAdmin}
-                className="card p-4 flex flex-wrap gap-2 items-end"
+                className={cardStyles({ className: "p-4 flex flex-wrap gap-2 items-end" })}
                 onSubmit={(e) => {
                   e.preventDefault();
                   addCh.mutate(undefined);
                 }}
               >
                 <label className="text-xs">
-                  <div className="label mb-1">Type</div>
-                  <select className="input" value={ch.kind} onChange={(e) => setCh({ ...ch, kind: e.target.value })}>
+                  <div className={labelStyles({ className: "mb-1" })}>Type</div>
+                  <Select value={ch.kind} onChange={(e) => setCh({ ...ch, kind: e.target.value })}>
                     <option value="webhook">Webhook</option>
                     <option value="slack">Slack</option>
-                  </select>
+                  </Select>
                 </label>
                 <label className="text-xs">
-                  <div className="label mb-1">Name</div>
-                  <input
-                    className="input w-48"
+                  <div className={labelStyles({ className: "mb-1" })}>Name</div>
+                  <Input
+                    className="w-48"
                     value={ch.name}
                     onChange={(e) => setCh({ ...ch, name: e.target.value })}
                     placeholder="oncall"
@@ -364,20 +365,20 @@ export function OrgSettings() {
                   />
                 </label>
                 <label className="text-xs flex-1">
-                  <div className="label mb-1">URL</div>
-                  <input
-                    className="input w-full"
+                  <div className={labelStyles({ className: "mb-1" })}>URL</div>
+                  <Input
+                    className="w-full"
                     value={ch.url}
                     onChange={(e) => setCh({ ...ch, url: e.target.value })}
                     placeholder="https://hooks.example.com/..."
                     data-testid="channel-url"
                   />
                 </label>
-                <button className="btn-primary" disabled={!ch.name || !ch.url}>
+                <Button variant="primary" disabled={!ch.name || !ch.url}>
                   Add channel
-                </button>
+                </Button>
               </form>
-              <table className="tbl card">
+              <table className={tableStyles({ className: "bg-white border border-line rounded-lg" })}>
                 <thead>
                   <tr>
                     <th>Handle</th>
@@ -438,7 +439,7 @@ logs:
   debian:stable-slim sh -c "apt-get update -qq && apt-get install -yqq curl >/dev/null && curl -fsSL ${url}/install.sh | sh && /opt/datacat-agent/bin/datacat-agent run -c /etc/datacat/datacat.yaml"`;
   const code = (s: string) => (
     <div className="relative">
-      <pre className="mono text-xs bg-[#23222c] text-white rounded p-4 overflow-auto">{s}</pre>
+      <pre className="mono text-xs bg-brand-900 text-white rounded p-4 overflow-auto">{s}</pre>
       <button className="absolute top-2 right-2 text-white/60 hover:text-white" onClick={() => navigator.clipboard.writeText(s)}>
         <Copy size={14} />
       </button>
@@ -474,7 +475,7 @@ logs:
             <button
               key={k}
               onClick={() => setTab(k)}
-              className={`px-3 h-8 rounded text-[13px] ${tab === k ? "bg-primary text-white" : "bg-panel hover:bg-[#eef2fc]"}`}
+              className={`px-3 h-8 rounded text-[13px] ${tab === k ? "bg-primary text-white" : "bg-panel hover:bg-brand-100"}`}
             >
               {l}
             </button>
@@ -523,9 +524,9 @@ export function SampleDataButton() {
   });
   const running = st.data?.running;
   return (
-    <button className="btn" disabled={m.isPending} onClick={() => m.mutate(!!running)} data-testid="sample-data">
+    <Button disabled={m.isPending} onClick={() => m.mutate(!!running)} data-testid="sample-data">
       {m.isPending ? "Loading sample data…" : running ? "Stop sample data" : "Load sample data"}
-    </button>
+    </Button>
   );
 }
 
@@ -552,54 +553,58 @@ export function Home() {
   return (
     <div>
       <PageHeader title={`Welcome${user?.firstName ? ", " + user.firstName : ""}`} sub={user?.orgName} />
-      <div className="p-6 space-y-6">
+      <div className="p-8 space-y-8 max-w-[1400px]">
         {empty && (
-          <div className="card p-6 flex items-center gap-5 bg-[#eef2fc] border-brand-100">
-            <CatMark size={48} />
+          <div className={cardStyles({ className: "p-6 flex items-center gap-5 bg-brand-100 border-brand-100" })}>
+            <CatMark size={64} />
             <div className="flex-1">
-              <div className="section-title">Start sending data to DataCat</div>
+              <div className={sectionTitleStyles()}>Start sending data to DataCat</div>
               <div className="text-ink-2">Add DataCat to your code (Node.js or Python) or install the host agent. It takes about ten minutes.</div>
             </div>
             <SampleDataButton />
-            <Link href="/docs/getting-started" className="btn-primary">
+            <Link href="/docs/getting-started" className={buttonStyles({ variant: "primary" })}>
               Get started
             </Link>
           </div>
         )}
         <div className="grid grid-cols-5 gap-4">
           {tiles.map((t) => (
-            <Link key={t.label} href={t.href} className="card p-4 hover:border-brand-400">
-              <div className="flex items-center gap-2 text-ink-2 text-xs">
-                <t.icon size={14} />
+            <Link key={t.label} href={t.href} className={cardStyles({ className: "p-5 rounded-xl hover:border-brand-400 hover:shadow-sm transition" })}>
+              <div className="flex items-center gap-2 text-ink-2 text-[13px]">
+                <t.icon size={16} />
                 {t.label}
               </div>
-              <div className="text-[28px] font-light mt-1">{t.value === undefined ? "—" : fmtNum(t.value)}</div>
+              <div className="text-[32px] font-semibold tracking-tight mt-2">{t.value === undefined ? "—" : fmtNum(t.value)}</div>
             </Link>
           ))}
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div className="card">
-            <div className="px-4 py-2 border-b border-line font-semibold flex">
+          <div className={cardStyles({ className: "rounded-xl overflow-hidden" })}>
+            <div className="px-5 py-3.5 border-b border-line text-[15px] font-semibold flex items-center">
               Triggered monitors
-              <Link href="/monitors/manage" className="ml-auto text-xs text-primary font-normal">
+              <Link href="/monitors/manage" className="ml-auto text-[13px] text-primary font-medium">
                 All monitors →
               </Link>
             </div>
             {alerting.length === 0 ? (
-              <div className="px-4 py-4 text-ink-3 text-xs">All monitors are OK.</div>
+              <div className="px-5 py-8 text-ink-3 text-[13px] text-center">All monitors are OK.</div>
             ) : (
               alerting.map((m) => (
-                <Link key={m.id} href={`/monitors/${m.id}`} className="flex items-center gap-2 px-4 py-2 border-b border-line hover:bg-[#eef2fc]">
+                <Link
+                  key={m.id}
+                  href={`/monitors/${m.id}`}
+                  className="flex items-center gap-2 px-5 py-3 border-b border-line last:border-0 hover:bg-brand-100 text-[13px]"
+                >
                   <StatusBadge state={m.overall_state} />
                   <span className="truncate">{m.name}</span>
                 </Link>
               ))
             )}
           </div>
-          <div className="card">
-            <div className="px-4 py-2 border-b border-line font-semibold flex">
+          <div className={cardStyles({ className: "rounded-xl overflow-hidden" })}>
+            <div className="px-5 py-3.5 border-b border-line text-[15px] font-semibold flex items-center">
               Services
-              <Link href="/apm/services" className="ml-auto text-xs text-primary font-normal">
+              <Link href="/apm/services" className="ml-auto text-[13px] text-primary font-medium">
                 Service Catalog →
               </Link>
             </div>
@@ -607,26 +612,26 @@ export function Home() {
               <Link
                 key={s.service}
                 href={`/apm/services/${encodeURIComponent(s.service)}`}
-                className="flex items-center gap-2 px-4 py-2 border-b border-line hover:bg-[#eef2fc] text-xs"
+                className="flex items-center gap-3 px-5 py-3 border-b border-line last:border-0 hover:bg-brand-100 text-[13px]"
               >
                 <span className="flex-1 font-medium text-primary">{s.service}</span>
                 <span className="text-ink-2">p95 {fmtDuration(s.p95)}</span>
                 <span className={s.error_rate > 0.05 ? "text-alert" : "text-ink-2"}>{(s.error_rate * 100).toFixed(1)}% err</span>
               </Link>
             ))}
-            {!svcs.data?.services.length && <div className="px-4 py-4 text-ink-3 text-xs">No services reporting in the past hour.</div>}
+            {!svcs.data?.services.length && <div className="px-5 py-8 text-ink-3 text-[13px] text-center">No services reporting in the past hour.</div>}
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Link href="/metric/explorer" className="btn">
+          <Link href="/metric/explorer" className={buttonStyles()}>
             <LineChart size={14} />
             Explore metrics
           </Link>
-          <Link href="/monitors/create" className="btn">
+          <Link href="/monitors/create" className={buttonStyles()}>
             <Bell size={14} />
             New monitor
           </Link>
-          <Link href="/dashboard/lists?new=1" className="btn">
+          <Link href="/dashboard/lists?new=1" className={buttonStyles()}>
             <LayoutDashboard size={14} />
             New dashboard
           </Link>
@@ -635,6 +640,8 @@ export function Home() {
     </div>
   );
 }
+
+const FIELD_IDS = { setupToken: "setup-token", orgName: "org-name", email: "login-email", password: "login-password" };
 
 export function Login({ restricted, email }: { restricted?: boolean; email?: string | null }) {
   const { logout, data } = useAuthUser();
@@ -649,126 +656,171 @@ export function Login({ restricted, email }: { restricted?: boolean; email?: str
     queryFn: () => api<{ email: string; role: string }>(`/auth/invites/${encodeURIComponent(token)}`),
     retry: false,
   });
+  const inviteData = invite.data;
+  const inviteError = invite.error?.message;
   const setup = !!data?.setupRequired && !token;
+  const setupTokenRequired = !!data?.setupTokenRequired;
+  const isRestricted = restricted;
+  const [submitted, setSubmitted] = useState(false);
+  const emailValue = (inviteData?.email ?? address).trim();
+  const validate = () => {
+    const errors: Partial<Record<keyof typeof FIELD_IDS, string>> = {};
+    if (setup && setupTokenRequired && !setupToken.trim()) errors.setupToken = "Enter the setup token.";
+    if (setup && !orgName.trim()) errors.orgName = "Enter an organization name.";
+    if (!emailValue) errors.email = "Enter your email.";
+    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(emailValue)) errors.email = "Enter a valid email address.";
+    if (!password) errors.password = "Enter your password.";
+    else if (password.length < 12) errors.password = "Use at least 12 characters.";
+    return errors;
+  };
+  const errors = submitted ? validate() : {};
+  const invalid = (id: string, error?: string) => ({ id, "aria-invalid": error ? true : undefined, "aria-describedby": error ? `${id}-error` : undefined });
+  const inputCls = "w-full h-9 px-3 text-[14px] font-normal";
   const submit = useMutation({
     mutationFn: () =>
       api(token ? `/auth/invites/${encodeURIComponent(token)}` : setup ? "/auth/setup" : "/auth/login", {
-        body: { email: invite.data?.email ?? address, password, orgName, ...(setup && data?.setupTokenRequired ? { setupToken } : {}) },
+        body: { email: inviteData?.email ?? address, password, orgName, ...(setup && setupTokenRequired ? { setupToken } : {}) },
       }),
     onSuccess: () => {
-      window.location.href = "/";
+      const path = window.location.pathname;
+      window.location.href = token || path === "/login" ? "/" : path + window.location.search;
     },
   });
   return (
     <div className="min-h-full flex items-center justify-center bg-brand-900 py-8">
-      <div className="bg-white rounded-lg shadow-2xl p-8 w-[400px] text-center">
-        <div className="flex justify-center mb-3">
-          <CatMark size={56} />
-        </div>
-        <h1 className="text-[22px] font-bold mb-1">DataCat</h1>
-        <p className="text-ink-2 mb-6">Metrics, logs, traces, dashboards and alerts in one place.</p>
-        {setup && <h2 className="font-semibold text-base mb-4">Create your admin account + organization</h2>}
-        {token && <h2 className="font-semibold text-base mb-4">Join your organization</h2>}
-        {invite.isError && (
-          <p role="alert" className="text-alert mb-4 text-sm">
-            {invite.error.message}
-          </p>
-        )}
-        {restricted ? (
-          <>
-            <div className="card bg-panel p-3 text-xs text-ink-2 mb-4 text-left">
-              DataCat is invite-only right now. <b>{email}</b> doesn't have access yet. Ask a DataCat admin to invite you, then open the invite link.
+      <div className="bg-white rounded-xl shadow-2xl px-8 py-8 w-[380px] min-h-0 flex flex-col text-center">
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="flex justify-center">
+            <div className="relative w-[120px] h-[120px] flex items-end justify-center">
+              <div className="absolute left-[2px] right-0 bottom-[2px] top-[22px] rounded-[5px] bg-nav -rotate-[8deg]" />
+              <img src={`${import.meta.env.BASE_URL}logo-cat.svg`} width={90} height={98} alt="DataCat" className="relative" />
             </div>
-            <button className="btn w-full justify-center" onClick={logout}>
-              Sign in with a different account
-            </button>
-          </>
-        ) : (
-          <>
-            {(!token || invite.data) && (
-              <form
-                className="text-left space-y-3"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submit.mutate();
-                }}
-              >
-                {setup && data?.setupTokenRequired && (
-                  <label className="block text-xs">
-                    Setup token
-                    <input
-                      className="input w-full mt-1 mono"
-                      required
-                      value={setupToken}
-                      onChange={(e) => setSetupToken(e.target.value)}
-                      autoComplete="off"
-                      data-testid="setup-token"
-                    />
-                    <span className="text-ink-3">Printed in the server log at startup, or the value of DATACAT_SETUP_TOKEN.</span>
-                  </label>
-                )}
-                {setup && (
-                  <label className="block text-xs">
-                    Organization name
-                    <input
-                      className="input w-full mt-1"
-                      required
-                      maxLength={150}
-                      value={orgName}
-                      onChange={(e) => setOrgName(e.target.value)}
-                      autoComplete="organization"
-                    />
-                  </label>
-                )}
-                <label className="block text-xs">
-                  Email
-                  <input
-                    className="input w-full mt-1"
-                    type="email"
-                    required
-                    value={invite.data?.email ?? address}
-                    readOnly={!!token}
-                    onChange={(e) => setAddress(e.target.value)}
-                    autoComplete="username"
-                    data-testid="login-email"
-                  />
-                </label>
-                <label className="block text-xs">
-                  Password
-                  <input
-                    className="input w-full mt-1"
-                    type="password"
-                    required
-                    minLength={12}
-                    maxLength={256}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete={setup || token ? "new-password" : "current-password"}
-                    data-testid="login-password"
-                  />
-                </label>
-                {(setup || token) && <p className="text-xs text-ink-3">Use at least 12 characters. Keep your password somewhere safe.</p>}
-                {submit.isError && (
-                  <p role="alert" className="text-alert text-sm">
-                    {submit.error.message}
-                  </p>
-                )}
-                <button className="btn-primary w-full justify-center h-10" disabled={submit.isPending} data-testid="login">
-                  {submit.isPending ? "Please wait…" : setup ? "Create admin account" : token ? "Set password and join" : "Log in"}
-                </button>
-              </form>
-            )}
-          </>
-        )}
-        <p className="text-[11px] text-ink-3 mt-4">
-          {token ? (
-            <a href="/login" className="text-primary">
-              Already have an account? Log in
-            </a>
-          ) : (
-            "New members: ask your admin for an invite link."
+          </div>
+          <h1 className="mt-3 text-[22px] leading-tight font-bold tracking-tight">DataCat</h1>
+          <p className="mt-1 text-[13px] text-ink-2">Metrics, logs, traces and alerts in one place.</p>
+          {setup && <h2 className="mt-5 text-left font-semibold text-[20px] tracking-tight">Set up DataCat</h2>}
+          {!token && !isRestricted && window.location.pathname !== "/login" && window.location.pathname !== "/" && (
+            <div className="mt-5">
+              <Alert tone="info">Log in to open this page. You'll go straight to it after signing in.</Alert>
+            </div>
           )}
-        </p>
+          {inviteError && (
+            <div className="mt-5">
+              <Alert>{inviteError}</Alert>
+            </div>
+          )}
+          {isRestricted ? (
+            <>
+              <div className="mt-5">
+                <Alert tone="info">
+                  <b>{email}</b> doesn't have access yet. Ask an admin to invite you, then open the invite link.
+                </Alert>
+              </div>
+              <Button variant="dark" className="mt-4 w-full" onClick={logout}>
+                Sign in with a different account
+              </Button>
+            </>
+          ) : (
+            <>
+              {(!token || inviteData) && (
+                <form
+                  className="mt-5 text-left flex flex-col gap-3.5"
+                  noValidate
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    setSubmitted(true);
+                    const first = Object.keys(validate())[0];
+                    if (first) {
+                      document.getElementById(FIELD_IDS[first as keyof typeof FIELD_IDS])?.focus();
+                      return;
+                    }
+                    submit.mutate();
+                  }}
+                >
+                  {setup && setupTokenRequired && (
+                    <Field id="setup-token" label="Setup token" error={errors.setupToken}>
+                      <Input
+                        {...invalid("setup-token", errors.setupToken)}
+                        className={`${inputCls} mono placeholder:font-sans`}
+                        value={setupToken}
+                        onChange={(e) => {
+                          setSetupToken(e.target.value);
+                          submit.reset();
+                        }}
+                        autoComplete="off"
+                        placeholder="From the server log or DATACAT_SETUP_TOKEN"
+                        data-testid="setup-token"
+                      />
+                    </Field>
+                  )}
+                  {setup && (
+                    <Field id="org-name" label="Organization name" error={errors.orgName}>
+                      <Input
+                        {...invalid("org-name", errors.orgName)}
+                        className={inputCls}
+                        maxLength={150}
+                        value={orgName}
+                        onChange={(e) => {
+                          setOrgName(e.target.value);
+                          submit.reset();
+                        }}
+                        autoComplete="organization"
+                      />
+                    </Field>
+                  )}
+                  <Field id="login-email" label="Email" error={errors.email}>
+                    <Input
+                      {...invalid("login-email", errors.email)}
+                      className={inputCls}
+                      type="email"
+                      value={inviteData?.email ?? address}
+                      readOnly={!!token}
+                      onChange={(e) => {
+                        setAddress(e.target.value);
+                        submit.reset();
+                      }}
+                      autoComplete="username"
+                      data-testid="login-email"
+                    />
+                  </Field>
+                  <Field
+                    id="login-password"
+                    label="Password"
+                    error={errors.password}
+                    description={(setup || token) && password.length > 0 && password.length < 12 ? "Use at least 12 characters." : undefined}
+                  >
+                    <Input
+                      {...invalid("login-password", errors.password)}
+                      className={inputCls}
+                      type="password"
+                      maxLength={256}
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        submit.reset();
+                      }}
+                      autoComplete={setup || token ? "new-password" : "current-password"}
+                      data-testid="login-password"
+                    />
+                  </Field>
+                  {submit.isError && Object.keys(errors).length === 0 && <Alert>{submit.error.message}</Alert>}
+                  <Button variant="dark" className="mt-0.5 w-full" disabled={submit.isPending} data-testid="login">
+                    {submit.isPending ? "Please wait…" : setup ? "Create admin account" : token ? "Create account" : "Log in"}
+                  </Button>
+                </form>
+              )}
+            </>
+          )}
+          <p className="mt-4 text-[12px] text-ink-3">
+            {token ? (
+              <a href="/login" className="text-primary">
+                Already have an account? Log in
+              </a>
+            ) : (
+              "Need access? Ask your admin for an invite."
+            )}
+          </p>
+        </div>
       </div>
     </div>
   );

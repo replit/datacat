@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { api } from "@/lib/api";
-import { PageHeader, TABS, ICONS } from "@/components/Layout";
+import { PageHeader, TABS } from "@/components/Layout";
 import { TimePicker } from "@/components/TimePicker";
 import { TimeseriesChart } from "@/components/Chart";
 import { QueryList, type QDef, type FDef } from "@/components/QueryEditor";
 import { SidePanel } from "@/components/Panels";
 import { useTime } from "@/lib/time";
 import { fmtAgo } from "@/lib/format";
+import { Input, badgeStyles, buttonStyles, cardStyles, labelStyles, sectionTitleStyles, tableStyles } from "@/components/ui";
 
 export function MetricsExplorer() {
   const { from, to, tick } = useTime();
@@ -26,11 +27,11 @@ export function MetricsExplorer() {
   }));
   return (
     <div>
-      <PageHeader title="Metrics" icon={ICONS.metrics} tabs={TABS.metrics}>
+      <PageHeader title="Metrics" tabs={TABS.metrics}>
         <TimePicker />
       </PageHeader>
       <div className="p-6 space-y-4">
-        <div className="card p-4">
+        <div className={cardStyles({ className: "p-4" })}>
           <div className="flex items-center mb-2">
             <div className="text-xs text-ink-3">
               Rollup interval: {q.data?.interval ?? "—"}s · {series.length} series
@@ -53,8 +54,8 @@ export function MetricsExplorer() {
             <TimeseriesChart series={series} type={display} height={340} from={from} to={to} showLegend={series.length > 1} />
           )}
         </div>
-        <div className="card p-4">
-          <div className="section-title mb-3">Graph</div>
+        <div className={cardStyles({ className: "p-4" })}>
+          <div className={sectionTitleStyles({ className: "mb-3" })}>Graph</div>
           <QueryList
             queries={queries}
             formulas={formulas}
@@ -83,13 +84,13 @@ export function MetricsSummary() {
   });
   return (
     <div>
-      <PageHeader title="Metrics" icon={ICONS.metrics} tabs={TABS.metrics} sub={`${list.data?.metrics.length ?? 0} metrics`} />
+      <PageHeader title="Metrics" tabs={TABS.metrics} sub={`${list.data?.metrics.length ?? 0} metrics`} />
       <div className="p-6">
         <div className="relative mb-3 max-w-md">
           <Search size={14} className="absolute left-2.5 top-2.5 text-ink-3" />
-          <input className="input w-full pl-8" placeholder="Search metrics" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input className="w-full pl-8" placeholder="Search metrics" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <table className="tbl card">
+        <table className={tableStyles({ className: "bg-white border border-line rounded-lg" })}>
           <thead>
             <tr>
               <th>Metric name</th>
@@ -112,24 +113,24 @@ export function MetricsSummary() {
       </div>
       <SidePanel open={!!sel} onClose={() => setSel(null)} title={<span className="mono">{sel}</span>}>
         <div className="p-5 space-y-4">
-          <a className="btn-primary" href={`/metric/explorer?q=${encodeURIComponent(`avg:${sel}{*}`)}`}>
+          <a className={buttonStyles({ variant: "primary" })} href={`/metric/explorer?q=${encodeURIComponent(`avg:${sel}{*}`)}`}>
             Open in Metrics Explorer
           </a>
           <div>
-            <div className="label mb-1">Hosts ({tags.data?.hosts.length ?? 0})</div>
+            <div className={labelStyles({ className: "mb-1" })}>Hosts ({tags.data?.hosts.length ?? 0})</div>
             <div className="flex flex-wrap gap-1">
               {tags.data?.hosts.map((h) => (
-                <span key={h} className="chip">
+                <span key={h} className={badgeStyles()}>
                   {h}
                 </span>
               ))}
             </div>
           </div>
           <div>
-            <div className="label mb-1">Tags ({tags.data?.tags.length ?? 0})</div>
+            <div className={labelStyles({ className: "mb-1" })}>Tags ({tags.data?.tags.length ?? 0})</div>
             <div className="flex flex-wrap gap-1">
               {tags.data?.tags.map((t) => (
-                <span key={t} className="chip">
+                <span key={t} className={badgeStyles()}>
                   {t}
                 </span>
               ))}

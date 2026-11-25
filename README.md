@@ -17,7 +17,7 @@ Built using [Replit Missions](https://replit.com/blog/introducing-replit-mission
 - OpenTelemetry Collector-based host agent and Node.js/Python instrumentation libraries
 - One production process serving the API, web UI, installer and downloads
 
-![DataCat dashboard](docs/images/dashboard.jpg)
+![DataCat APM service page with request, error and latency charts](docs/images/apm-service.jpg)
 
 ## Quick start with Docker Compose
 

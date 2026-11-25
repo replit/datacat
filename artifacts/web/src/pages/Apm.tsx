@@ -3,13 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams, useSearch, useLocation } from "wouter";
 import { Search, Plus } from "lucide-react";
 import { api } from "@/lib/api";
-import { PageHeader, TABS, ICONS } from "@/components/Layout";
+import { PageHeader, TABS } from "@/components/Layout";
 import { useAuthUser } from "@/lib/auth";
 import { TimePicker } from "@/components/TimePicker";
 import { TimeseriesChart } from "@/components/Chart";
 import { Facet, Empty, SidePanel } from "@/components/Panels";
 import { useTime } from "@/lib/time";
 import { fmtDuration, fmtNum, fmtPct, fmtTime, colorFor, STATUS_COLORS } from "@/lib/format";
+import { Input, Select, badgeStyles, buttonStyles, cardStyles, labelStyles, sectionTitleStyles, tableStyles } from "@/components/ui";
 
 interface Svc {
   service: string;
@@ -117,44 +118,44 @@ export function ApmServices() {
   const alerting = (mons.data ?? []).filter((m) => m.overall_state === "Alert");
   return (
     <div className="min-h-full">
-      <PageHeader title="APM" icon={ICONS.apm} tabs={TABS.apm}>
+      <PageHeader title="APM" tabs={TABS.apm}>
         <TimePicker />
       </PageHeader>
-      <div className="max-w-[1180px] mx-auto px-6 py-6">
+      <div className="px-6 py-6">
         <div className="flex items-start mb-5">
           <div>
             <h2 className="text-[24px] font-semibold">Welcome to APM{user?.firstName ? `, ${user.firstName}` : ""}</h2>
             <div className="text-ink-2 text-[13px] mt-0.5">Get a real-time view of your system's services, dependencies, and performance.</div>
           </div>
-          <Link href="/docs/getting-started" className="btn ml-auto !border-primary !text-primary">
+          <Link href="/docs/getting-started" className={buttonStyles({ className: "ml-auto" })}>
             <Plus size={14} /> Instrument a Service
           </Link>
         </div>
         <h3 className="text-[16px] font-semibold mb-2">What needs your attention</h3>
         <div className="grid grid-cols-3 gap-3 mb-7">
           {attention.map((a, i) => (
-            <Link key={i} href={a.href} className="card p-3.5 flex flex-col gap-2 hover:border-[#b9c3dd] min-h-[132px]">
+            <Link key={i} href={a.href} className={cardStyles({ className: "p-3.5 flex flex-col gap-2 hover:border-brand-400 min-h-[132px]" })}>
               <div className="flex items-center text-[11px] font-semibold text-ink-2 uppercase tracking-wide">
                 <span>{a.kind}</span>
                 <span
-                  className={`ml-auto px-1.5 rounded-[3px] text-[10px] ${a.level === "HIGH" ? "bg-[#fde5e7] text-alert" : a.level === "MEDIUM" ? "bg-[#fdf1d8] text-[#9a6a00]" : "bg-[#eef0f3] text-ink-2"}`}
+                  className={`ml-auto px-1.5 rounded-[3px] text-[10px] ${a.level === "HIGH" ? "bg-alert/10 text-alert" : a.level === "MEDIUM" ? "bg-warn/15 text-amber-800" : "bg-subtle text-ink-2"}`}
                 >
                   {a.level}
                 </span>
               </div>
               <div className="text-[14px] leading-snug flex-1">{a.title}</div>
               <div className="flex gap-2 text-[11px]">
-                <span className="chip">
+                <span className={badgeStyles()}>
                   <span className="w-2 h-2 rounded-sm" style={{ background: svcColor(a.svc ?? "") }} />
                   {a.svc}
                 </span>
-                <span className="chip">{a.foot}</span>
+                <span className={badgeStyles()}>{a.foot}</span>
               </div>
             </Link>
           ))}
           <Link
             href="/monitors/manage?status=Alert"
-            className="rounded-[4px] p-3.5 bg-gradient-to-br from-[#f1ecfd] to-[#e9eefc] border border-[#e3dcf7] flex flex-col min-h-[132px]"
+            className="rounded-lg p-3.5 bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-200 flex flex-col min-h-[132px]"
           >
             <div className="text-[18px] font-semibold leading-tight">
               {alerting.length ? `${alerting.length} monitor${alerting.length > 1 ? "s" : ""} alerting` : "All monitors OK"}
@@ -169,7 +170,7 @@ export function ApmServices() {
           </Link>
         </div>
         <h3 className="text-[16px] font-semibold mb-2">Your system at a glance</h3>
-        <div className="card">
+        <div className={cardStyles()}>
           <div className="flex justify-center border-b border-line">
             <span className="px-8 h-10 flex items-center gap-2 text-[13px] font-semibold border-b-2 border-primary -mb-px">Services</span>
             <Link href="/apm/traces" className="px-8 h-10 flex items-center text-[13px] text-ink-2 hover:text-ink">
@@ -183,16 +184,16 @@ export function ApmServices() {
           <div className="flex gap-2 px-4 py-2">
             <div className="relative flex-1">
               <Search size={14} className="absolute left-2.5 top-2 text-ink-3" />
-              <input className="input w-full pl-8" placeholder="Search services" value={q} onChange={(e) => setQ(e.target.value)} />
+              <Input className="w-full pl-8" placeholder="Search services" value={q} onChange={(e) => setQ(e.target.value)} />
             </div>
-            <select className="input w-36" value={env} onChange={(e) => setEnv(e.target.value)} aria-label="env">
+            <Select className="w-36" value={env} onChange={(e) => setEnv(e.target.value)} aria-label="env">
               <option value="*">env:*</option>
               {data.data?.envs.map((e) => (
                 <option key={e} value={e}>
                   env:{e}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           {rows.length === 0 && !data.isLoading ? (
             <Empty title="No services reporting">
@@ -202,7 +203,7 @@ export function ApmServices() {
               </Link>
             </Empty>
           ) : (
-            <table className="tbl">
+            <table className={tableStyles()}>
               <thead>
                 <tr>
                   <th>Service</th>
@@ -276,7 +277,6 @@ export function ApmService() {
   return (
     <div className="bg-canvas min-h-full">
       <PageHeader
-        icon={ICONS.apm}
         title={
           <span className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-sm" style={{ background: svcColor(svc) }} />
@@ -290,7 +290,7 @@ export function ApmService() {
       <ApmTabs />
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-3 gap-4">
-          <div className="card p-3">
+          <div className={cardStyles({ className: "p-3" })}>
             <div className="text-xs font-semibold mb-1">
               Requests <span className="text-ink-3 font-normal">hits/s</span>
             </div>
@@ -302,7 +302,7 @@ export function ApmService() {
               series={[{ label: "hits/s", points: ts.map((p: any) => [p.t, p.hits / interval]), color: "#5b7be0" }]}
             />
           </div>
-          <div className="card p-3">
+          <div className={cardStyles({ className: "p-3" })}>
             <div className="text-xs font-semibold mb-1">
               Errors <span className="text-ink-3 font-normal">errors/s</span>
             </div>
@@ -314,7 +314,7 @@ export function ApmService() {
               series={[{ label: "errors/s", points: ts.map((p: any) => [p.t, p.errors / interval]), color: "#d33b4c" }]}
             />
           </div>
-          <div className="card p-3">
+          <div className={cardStyles({ className: "p-3" })}>
             <div className="text-xs font-semibold mb-1">Latency</div>
             <TimeseriesChart
               height={170}
@@ -331,9 +331,9 @@ export function ApmService() {
           </div>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div className="card col-span-2">
+          <div className={cardStyles({ className: "col-span-2" })}>
             <div className="px-4 py-2 border-b border-line font-semibold">Resources</div>
-            <table className="tbl">
+            <table className={tableStyles()}>
               <thead>
                 <tr>
                   <th>Resource</th>
@@ -349,7 +349,7 @@ export function ApmService() {
                 {(d.data?.resources ?? []).map((r: any) => (
                   <tr
                     key={r.resource + r.name}
-                    className={`cursor-pointer ${res === r.resource ? "bg-[#eef2fc]" : ""}`}
+                    className={`cursor-pointer ${res === r.resource ? "bg-brand-100" : ""}`}
                     onClick={() => setRes(res === r.resource ? null : r.resource)}
                     data-testid="resource-row"
                   >
@@ -365,13 +365,13 @@ export function ApmService() {
               </tbody>
             </table>
           </div>
-          <div className="card">
+          <div className={cardStyles()}>
             <div className="px-4 py-2 border-b border-line font-semibold">Downstream services</div>
             {(d.data?.downstream ?? []).map((x: any) => (
               <Link
                 key={x.service}
                 href={`/apm/services/${encodeURIComponent(x.service)}`}
-                className="flex items-center gap-2 px-4 py-1.5 text-xs border-b border-line hover:bg-[#eef2fc]"
+                className="flex items-center gap-2 px-4 py-1.5 text-xs border-b border-line hover:bg-brand-100"
               >
                 <span className="w-2.5 h-2.5 rounded-sm" style={{ background: svcColor(x.service) }} />
                 <span className="flex-1">{x.service}</span>
@@ -383,7 +383,7 @@ export function ApmService() {
             {!d.data?.downstream?.length && <div className="px-4 py-3 text-xs text-ink-3">No downstream calls observed</div>}
           </div>
         </div>
-        <div className="card">
+        <div className={cardStyles()}>
           <div className="px-4 py-2 border-b border-line font-semibold flex">
             Traces{res && <span className="ml-2 chip">{res}</span>}
             <Link className="ml-auto text-xs font-normal text-primary" href={`/apm/traces?query=${encodeURIComponent(`service:${svc}`)}`}>
@@ -400,7 +400,7 @@ export function ApmService() {
 function SpanTable({ spans }: { spans: Span[] }) {
   const [, nav] = useLocation();
   return (
-    <table className="tbl">
+    <table className={tableStyles()}>
       <thead>
         <tr>
           <th className="w-44">Date</th>
@@ -462,12 +462,7 @@ export function TraceExplorer() {
   };
   return (
     <div className="h-full flex flex-col">
-      <PageHeader
-        title="APM"
-        icon={ICONS.apm}
-        tabs={TABS.apm}
-        sub={spans.data ? `${fmtNum(spans.data.total)}${spans.data.total_capped ? "+" : ""} spans` : undefined}
-      >
+      <PageHeader title="APM" tabs={TABS.apm} sub={spans.data ? `${fmtNum(spans.data.total)}${spans.data.total_capped ? "+" : ""} spans` : undefined}>
         <TimePicker />
       </PageHeader>
       <div className="px-6 py-3 border-b border-line flex gap-3 items-center">
@@ -479,8 +474,8 @@ export function TraceExplorer() {
           }}
         >
           <Search size={14} className="absolute left-2.5 top-2.5 text-ink-3" />
-          <input
-            className="input w-full pl-8 mono text-xs"
+          <Input
+            className="w-full pl-8 mono text-xs"
             placeholder='service:web resource_name:"GET /users" @http.status_code:500 @duration:>100ms'
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -566,7 +561,7 @@ export function TraceView() {
         }
         sub={`${fmtDuration(total)} · ${flat.length} spans · ${fmtTime(root.start_ms, true)}`}
       >
-        <Link className="btn" href={`/logs?query=${encodeURIComponent(`trace_id:${traceId}`)}`}>
+        <Link className={buttonStyles()} href={`/logs?query=${encodeURIComponent(`trace_id:${traceId}`)}`}>
           View logs
         </Link>
       </PageHeader>
@@ -612,10 +607,10 @@ export function TraceView() {
               ))}
             </div>
           ) : (
-            <table className="tbl">
+            <table className={tableStyles()}>
               <tbody>
                 {flat.map((s) => (
-                  <tr key={s.span_id} onClick={() => setSelId(s.span_id)} className={`cursor-pointer ${sel.span_id === s.span_id ? "bg-[#eef2fc]" : ""}`}>
+                  <tr key={s.span_id} onClick={() => setSelId(s.span_id)} className={`cursor-pointer ${sel.span_id === s.span_id ? "bg-brand-100" : ""}`}>
                     <td className="w-[40%]">
                       <div style={{ paddingLeft: s.depth * 14 }} className="flex items-center gap-1.5 text-xs truncate">
                         <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: svcColor(s.service) }} />
@@ -643,7 +638,7 @@ export function TraceView() {
         </div>
         <div className="flex-1 overflow-auto scroll-thin p-5 grid grid-cols-2 gap-6">
           <div>
-            <div className="section-title mb-1">{sel.name}</div>
+            <div className={sectionTitleStyles({ className: "mb-1" })}>{sel.name}</div>
             <div className="mono text-xs text-ink-2 mb-3 break-all">{sel.resource}</div>
             <div className="grid grid-cols-[140px_1fr] gap-y-1 text-xs">
               <span className="text-ink-3">Service</span>
@@ -674,7 +669,7 @@ export function TraceView() {
             ) : null}
           </div>
           <div>
-            <div className="label mb-1">Tags</div>
+            <div className={labelStyles({ className: "mb-1" })}>Tags</div>
             <div className="text-xs space-y-0.5">
               {Object.entries(sel.meta ?? {})
                 .filter(([k]) => !k.startsWith("error.stack"))
@@ -687,7 +682,7 @@ export function TraceView() {
             </div>
             {(d.data?.logs ?? []).length > 0 && (
               <div className="mt-4">
-                <div className="label mb-1">Logs ({d.data!.logs.length})</div>
+                <div className={labelStyles({ className: "mb-1" })}>Logs ({d.data!.logs.length})</div>
                 {d.data!.logs.map((l) => (
                   <div key={l.id} className="flex gap-2 text-xs py-0.5">
                     <span className="w-1 rounded" style={{ background: STATUS_COLORS[l.status] }} />

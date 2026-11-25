@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Button, cardStyles } from "@/components/ui";
 
 /** Shows a recoverable error panel instead of a blank page when a view throws while rendering. */
 export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: string }, { error: Error | null; stack: string }> {
@@ -17,7 +18,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: s
     if (!this.state.error) return this.props.children;
     return (
       <div className="p-10">
-        <div className="card border-alert/30 bg-red-50 p-5 max-w-2xl">
+        <div className={cardStyles({ className: "border-alert/30 bg-red-50 p-5 max-w-2xl" })}>
           <div className="font-semibold text-alert mb-1">Something went wrong on this page</div>
           <pre className="mono text-xs whitespace-pre-wrap text-ink-2" data-testid="view-error">
             {String(this.state.error.message)}
@@ -27,9 +28,9 @@ export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: s
               {this.state.stack}
             </pre>
           )}
-          <button className="btn mt-3" onClick={() => this.setState({ error: null, stack: "" })}>
+          <Button className="mt-3" onClick={() => this.setState({ error: null, stack: "" })}>
             Try again
-          </button>
+          </Button>
         </div>
       </div>
     );

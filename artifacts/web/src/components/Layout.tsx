@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
+  House,
   Server,
   Bell,
   Activity,
@@ -10,24 +11,23 @@ import {
   LineChart,
   Settings,
   CalendarClock,
-  HelpCircle,
   LogOut,
   Search,
   BookOpen,
   UserPlus,
-  LifeBuoy,
+  CircleHelp,
   PlugZap,
 } from "lucide-react";
-import { CatMark } from "./Logo";
 import { useAuthUser } from "@/lib/auth";
 import { api } from "@/lib/api";
+import {} from "@/components/ui";
 
 type NavItem = { label: string; icon: any; href: string; match: string[]; children?: { label: string; href: string }[] };
 const NAV_GROUPS: NavItem[][] = [
   [
     {
       label: "Dashboards",
-      icon: LayoutDashboard,
+      icon: House,
       href: "/dashboard/lists",
       match: ["/dashboard"],
       children: [
@@ -95,21 +95,20 @@ const NAV_GROUPS: NavItem[][] = [
   ],
 ];
 const NAV = NAV_GROUPS.flat();
+const navItemCls = (active: boolean) =>
+  `flex items-center gap-3 px-3 h-9 rounded-md text-[14px] transition-colors ${active ? "bg-white/[0.14] text-white font-medium" : "text-white/70 hover:bg-white/[0.08] hover:text-white"}`;
 
 function NavLink({ n, active, onHover, hover, close }: { n: NavItem; active: boolean; onHover: (s: string) => void; hover: string | null; close: () => void }) {
   return (
     <div className="relative" onMouseEnter={() => onHover(n.label)}>
-      <Link
-        href={n.href}
-        className={`flex items-center gap-2.5 mx-2 px-2.5 h-[30px] rounded-[3px] text-[13px] ${active ? "bg-white/[0.13] text-white font-semibold" : "text-white/75 hover:bg-white/[0.08] hover:text-white"}`}
-      >
-        <n.icon size={15} strokeWidth={1.9} /> {n.label}
+      <Link href={n.href} className={navItemCls(active)}>
+        <n.icon size={18} strokeWidth={1.8} /> {n.label}
       </Link>
       {hover === n.label && n.children && (
-        <div className="absolute left-full top-0 -ml-1 w-56 bg-white text-ink shadow-xl rounded-[4px] border border-line py-2 z-50">
+        <div className="absolute left-full top-0 ml-2 w-56 bg-white text-ink shadow-xl rounded-md border border-line py-2 z-50">
           <div className="px-4 pb-1.5 text-[12px] font-semibold text-ink">{n.label}</div>
           {n.children.map((c) => (
-            <Link key={c.href} href={c.href} onClick={close} className="block px-4 py-1.5 text-[13px] text-ink-2 hover:bg-[#f2f4fb] hover:text-primary">
+            <Link key={c.href} href={c.href} onClick={close} className="block px-4 py-1.5 text-[13px] text-ink-2 hover:bg-brand-50 hover:text-primary">
               {c.label}
             </Link>
           ))}
@@ -177,7 +176,7 @@ function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void 
               key={i.kind + i.href}
               onMouseEnter={() => setSel(k)}
               onClick={() => go(i.href)}
-              className={`w-full flex items-center gap-3 px-3 h-8 text-left text-[13px] ${k === sel ? "bg-[#eef2fc] text-primary" : ""}`}
+              className={`w-full flex items-center gap-3 px-3 h-8 text-left text-[13px] ${k === sel ? "bg-brand-100 text-primary" : ""}`}
             >
               <span className="w-20 shrink-0 text-[11px] text-ink-3">{i.kind}</span>
               <span className="truncate">{i.label}</span>
@@ -209,80 +208,70 @@ export function Layout({ children }: { children: ReactNode }) {
   const initial = (user?.firstName ?? user?.email ?? "?")[0]?.toUpperCase();
   return (
     <div className="flex h-full bg-nav">
-      <nav className="w-[200px] shrink-0 bg-nav text-white flex flex-col relative z-30" onMouseLeave={() => setHover(null)}>
-        <Link href="/" className="flex flex-col items-center justify-center pt-4 pb-3 gap-1" aria-label="DataCat home">
-          <CatMark size={54} />
-          <span className="text-[15px] font-extrabold tracking-[0.12em]">DATACAT</span>
+      <nav className="w-[232px] shrink-0 bg-nav text-white flex flex-col relative z-30 px-3" onMouseLeave={() => setHover(null)}>
+        <Link href="/" className="flex flex-col items-center gap-2 px-3 pt-5 pb-3" aria-label="DataCat home">
+          <img src={`${import.meta.env.BASE_URL}logo-cat.svg`} width={110} height={120} alt="" />
+          <span className="w-[110px] flex justify-between text-[19px] leading-none font-extrabold" aria-hidden>
+            {"DATACAT".split("").map((c, i) => (
+              <span key={i}>{c}</span>
+            ))}
+          </span>
         </Link>
-        <div className="flex-1 flex flex-col gap-3 pt-1">
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-0.5 pt-3">
           {NAV_GROUPS.map((g, gi) => (
-            <div key={gi} className="flex flex-col gap-px">
+            <div key={gi} className="flex flex-col gap-0.5">
               {g.map((n) => (
                 <NavLink key={n.label} n={n} active={active(n)} hover={hover} onHover={setHover} close={() => setHover(null)} />
               ))}
             </div>
           ))}
-        </div>
-        <div className="flex flex-col gap-px pb-2" onMouseEnter={() => setHover(null)}>
-          <Link
-            href="/account/agent"
-            className={`flex items-center gap-2.5 mx-2 px-2.5 h-[30px] rounded-[3px] text-[13px] ${loc.startsWith("/account/agent") ? "bg-white/[0.13] font-semibold" : "text-white/75 hover:bg-white/[0.08]"}`}
-          >
-            <PlugZap size={15} /> Install Agent
-          </Link>
-          <Link
-            href="/docs"
-            className={`flex items-center gap-2.5 mx-2 px-2.5 h-[30px] rounded-[3px] text-[13px] ${loc.startsWith("/docs") ? "bg-white/[0.13] font-semibold" : "text-white/75 hover:bg-white/[0.08]"}`}
-          >
-            <BookOpen size={15} /> Docs
-          </Link>
-          <Link
-            href="/organization-settings"
-            className={`flex items-center gap-2.5 mx-2 px-2.5 h-[30px] rounded-[3px] text-[13px] ${loc.startsWith("/organization-settings") ? "bg-white/[0.13] font-semibold" : "text-white/75 hover:bg-white/[0.08]"}`}
-          >
-            <Settings size={15} /> Organization
-          </Link>
-          <div className="grid grid-cols-3 mt-2 pt-2 border-t border-white/10 text-white/70 text-[10px]">
-            <Link href="/organization-settings" className="flex flex-col items-center gap-0.5 py-1 hover:text-white">
-              <UserPlus size={14} />
-              Invite
+          <div className="flex flex-col gap-0.5" onMouseEnter={() => setHover(null)}>
+            <Link href="/account/agent" className={navItemCls(loc.startsWith("/account/agent"))}>
+              <PlugZap size={18} strokeWidth={1.8} /> Install Agent
             </Link>
-            <Link href="/docs" className="flex flex-col items-center gap-0.5 py-1 hover:text-white">
-              <LifeBuoy size={14} />
-              Support
+            <Link href="/organization-settings" className={navItemCls(loc.startsWith("/organization-settings"))}>
+              <Settings size={18} strokeWidth={1.8} /> Organization
             </Link>
-            <Link href="/docs/getting-started" className="flex flex-col items-center gap-0.5 py-1 hover:text-white">
-              <HelpCircle size={14} />
-              Help
+            <Link href="/organization-settings" className={navItemCls(false)}>
+              <UserPlus size={18} strokeWidth={1.8} /> Invite people
             </Link>
           </div>
         </div>
+        <div className="flex flex-col gap-0.5 py-3 border-t border-white/10" onMouseEnter={() => setHover(null)}>
+          <Link href="/docs" className={navItemCls(loc.startsWith("/docs") && !loc.startsWith("/docs/getting-started"))}>
+            <BookOpen size={18} strokeWidth={1.8} /> Docs
+          </Link>
+          <Link href="/docs/getting-started" className={navItemCls(loc.startsWith("/docs/getting-started"))}>
+            <CircleHelp size={18} strokeWidth={1.8} /> Help
+          </Link>
+        </div>
       </nav>
-      <div className="flex-1 min-w-0 flex flex-col">
-        <header className="h-9 shrink-0 bg-nav flex items-center px-3 relative">
+      <div className="flex-1 min-w-0 flex flex-col pr-3 pb-4">
+        <header className="h-16 shrink-0 bg-nav grid grid-cols-[1fr_minmax(0,640px)_1fr] items-center gap-4 pl-1 pr-1">
+          <div />
           <button
             onClick={() => setPalette(true)}
-            className="absolute left-1/2 -translate-x-1/2 w-[340px] h-[26px] rounded-[3px] bg-white/[0.12] hover:bg-white/[0.17] text-white/70 text-[12px] flex items-center gap-2 px-2.5"
+            className="w-full h-9 rounded-lg bg-white/[0.1] hover:bg-white/[0.15] border border-white/20 hover:border-white/30 text-white/70 text-[14px] flex items-center gap-2.5 px-3.5 transition-colors"
             data-testid="global-search"
           >
-            <Search size={13} /> <span className="flex-1 text-left">Search DataCat</span>
-            <kbd className="text-[10px] text-white/60">⌘ K</kbd>
+            <Search size={17} /> <span className="flex-1 text-left">Search pages, dashboards and monitors</span>
+            <kbd className="text-[11px] text-white/60 border border-white/15 rounded px-1.5 py-0.5">⌘ K</kbd>
           </button>
           {user && (
-            <div className="ml-auto flex items-center gap-2 text-white/80 text-[12px]">
-              <span className="hidden md:inline truncate max-w-[180px]" title={user.email ?? ""}>
+            <div className="justify-self-end flex items-center gap-3 text-white/85 text-[13px]">
+              <span className="hidden md:inline truncate max-w-[200px]" title={user.email ?? ""}>
                 {user.firstName ?? user.email}
               </span>
-              <div className="w-6 h-6 rounded-[4px] bg-accent text-[#23222c] flex items-center justify-center font-bold text-[11px]" title={user.email ?? ""}>
+              <div className="w-8 h-8 rounded-full bg-accent text-brand-900 flex items-center justify-center font-bold text-[13px]" title={user.email ?? ""}>
                 {initial}
               </div>
-              <button onClick={logout} title="Log out" className="p-1 hover:text-white">
-                <LogOut size={14} />
+              <button onClick={logout} title="Log out" className="p-1.5 rounded-md hover:bg-white/10 hover:text-white">
+                <LogOut size={17} />
               </button>
             </div>
           )}
         </header>
-        <main className="flex-1 min-w-0 overflow-auto bg-white rounded-tl-[6px]">{children}</main>
+        <main className="flex-1 min-w-0 overflow-auto bg-white rounded-[20px] [corner-shape:squircle] shadow-sm">{children}</main>
       </div>
       <CommandPalette open={palette} onClose={() => setPalette(false)} />
     </div>
@@ -292,30 +281,17 @@ export function Layout({ children }: { children: ReactNode }) {
 export type HeaderTab = { label: string; href: string; active?: boolean };
 
 /** Product header: icon + product name + inline tabs on the left, actions on the right. */
-export function PageHeader({
-  title,
-  children,
-  sub,
-  icon: Icon,
-  tabs,
-}: {
-  title: ReactNode;
-  children?: ReactNode;
-  sub?: ReactNode;
-  icon?: any;
-  tabs?: HeaderTab[];
-}) {
+export function PageHeader({ title, children, sub, tabs }: { title: ReactNode; children?: ReactNode; sub?: ReactNode; tabs?: HeaderTab[] }) {
   const [loc] = useLocation();
   const search = typeof window !== "undefined" ? window.location.search : "";
   const isActive = (t: HeaderTab) =>
     t.active ??
     (t.href.includes("?") ? loc + search === t.href : loc === t.href && !(tabs ?? []).some((o) => o !== t && o.href.includes("?") && loc + search === o.href));
   return (
-    <div className="flex items-stretch gap-3 px-5 h-[50px] border-b border-line bg-white sticky top-0 z-20">
+    <div className="flex items-stretch gap-3 px-6 h-[60px] border-b border-line bg-white sticky top-0 z-20">
       <div className="flex items-center gap-2.5 min-w-0">
-        {Icon && <Icon size={18} strokeWidth={1.8} className="text-ink-2 shrink-0" />}
-        <h1 className="text-[17px] font-semibold truncate">{title}</h1>
-        {sub && <div className="text-ink-3 text-xs truncate self-center">{sub}</div>}
+        <h1 className="text-[19px] font-semibold tracking-tight truncate">{title}</h1>
+        {sub && <div className="text-ink-3 text-[13px] truncate self-center">{sub}</div>}
       </div>
       {tabs && (
         <div className="flex items-stretch ml-3">
@@ -323,7 +299,7 @@ export function PageHeader({
             <Link
               key={t.href}
               href={t.href}
-              className={`px-3 flex items-center text-[13px] border-b-2 -mb-px ${isActive(t) ? "border-primary text-ink font-semibold" : "border-transparent text-ink-2 hover:text-ink"}`}
+              className={`px-3 flex items-center text-[14px] border-b-2 -mb-px ${isActive(t) ? "border-primary text-ink font-semibold" : "border-transparent text-ink-2 hover:text-ink"}`}
             >
               {t.label}
             </Link>
@@ -340,7 +316,6 @@ export const TABS = {
     { label: "Hosts", href: "/infrastructure" },
     { label: "Host Map", href: "/infrastructure/map" },
   ],
-  dash: [{ label: "List", href: "/dashboard/lists" }],
   mon: [
     { label: "List", href: "/monitors/manage" },
     { label: "Triggered", href: "/monitors/manage?status=Alert" },
@@ -359,4 +334,3 @@ export const TABS = {
     { label: "Summary", href: "/metric/summary" },
   ],
 };
-export const ICONS = { infra: Server, dash: LayoutDashboard, mon: Bell, apm: Activity, logs: ScrollText, metrics: LineChart, events: CalendarClock };
