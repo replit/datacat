@@ -645,23 +645,22 @@ const FIELD_IDS = { setupToken: "setup-token", orgName: "org-name", email: "logi
 
 export function Login({ restricted, email }: { restricted?: boolean; email?: string | null }) {
   const { logout, data } = useAuthUser();
-  const screen = import.meta.env.DEV ? new URLSearchParams(window.location.search).get("screen") : null;
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
   const [orgName, setOrgName] = useState("");
   const [setupToken, setSetupToken] = useState("");
-  const token = screen?.startsWith("invite") ? "preview" : window.location.pathname.startsWith("/invite/") ? window.location.pathname.split("/")[2] : "";
+  const token = window.location.pathname.startsWith("/invite/") ? window.location.pathname.split("/")[2] : "";
   const invite = useQuery({
     queryKey: ["invite", token],
-    enabled: !!token && !screen,
+    enabled: !!token,
     queryFn: () => api<{ email: string; role: string }>(`/auth/invites/${encodeURIComponent(token)}`),
     retry: false,
   });
-  const inviteData = screen === "invite" ? { email: "new.member@example.com", role: "member" } : invite.data;
-  const inviteError = screen === "invite-invalid" ? "This invite is invalid, used, or expired. Ask your admin for a new one." : invite.error?.message;
-  const setup = screen ? screen.startsWith("setup") : !!data?.setupRequired && !token;
-  const setupTokenRequired = screen ? screen === "setup-token" : !!data?.setupTokenRequired;
-  const isRestricted = screen ? screen === "restricted" : restricted;
+  const inviteData = invite.data;
+  const inviteError = invite.error?.message;
+  const setup = !!data?.setupRequired && !token;
+  const setupTokenRequired = !!data?.setupTokenRequired;
+  const isRestricted = restricted;
   const [submitted, setSubmitted] = useState(false);
   const emailValue = (inviteData?.email ?? address).trim();
   const validate = () => {
@@ -700,7 +699,7 @@ export function Login({ restricted, email }: { restricted?: boolean; email?: str
           <h1 className="mt-3 text-[22px] leading-tight font-bold tracking-tight">DataCat</h1>
           <p className="mt-1 text-[13px] text-ink-2">Metrics, logs, traces and alerts in one place.</p>
           {setup && <h2 className="mt-5 text-left font-semibold text-[20px] tracking-tight">Set up DataCat</h2>}
-          {!screen && !token && !isRestricted && window.location.pathname !== "/login" && window.location.pathname !== "/" && (
+          {!token && !isRestricted && window.location.pathname !== "/login" && window.location.pathname !== "/" && (
             <div className="mt-5">
               <Alert tone="info">Log in to open this page. You'll go straight to it after signing in.</Alert>
             </div>
@@ -714,7 +713,7 @@ export function Login({ restricted, email }: { restricted?: boolean; email?: str
             <>
               <div className="mt-5">
                 <Alert tone="info">
-                  <b>{screen ? "someone@example.com" : email}</b> doesn't have access yet. Ask an admin to invite you, then open the invite link.
+                  <b>{email}</b> doesn't have access yet. Ask an admin to invite you, then open the invite link.
                 </Alert>
               </div>
               <Button variant="dark" className="mt-4 w-full" onClick={logout}>
@@ -735,7 +734,7 @@ export function Login({ restricted, email }: { restricted?: boolean; email?: str
                       document.getElementById(FIELD_IDS[first as keyof typeof FIELD_IDS])?.focus();
                       return;
                     }
-                    if (!screen) submit.mutate();
+                    submit.mutate();
                   }}
                 >
                   {setup && setupTokenRequired && (

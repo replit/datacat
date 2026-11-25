@@ -1,4 +1,4 @@
-import { Route, Switch, Redirect, useLocation, useSearch } from "wouter";
+import { Route, Switch, Redirect, useLocation } from "wouter";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Layout } from "@/components/Layout";
 import { TimeProvider } from "@/lib/time";
@@ -11,24 +11,11 @@ import { LogsExplorer } from "@/pages/Logs";
 import { ApmServices, ApmService, TraceExplorer, TraceView } from "@/pages/Apm";
 import { Events, OrgSettings, AgentSetup, Home, Login } from "@/pages/Misc";
 import { Docs } from "@/pages/Docs";
-import { DevScreens } from "@/components/DevScreens";
 
 export default function App() {
   const auth = useAuthUser();
   const [loc] = useLocation();
-  const search = useSearch();
-  const devScreen = import.meta.env.DEV ? new URLSearchParams(search).get("screen") : null;
-  return (
-    <>
-      <Screens auth={auth} loc={loc} devScreen={devScreen} />
-      {import.meta.env.DEV && <DevScreens />}
-    </>
-  );
-}
-
-function Screens({ auth, loc, devScreen }: { auth: ReturnType<typeof useAuthUser>; loc: string; devScreen: string | null }) {
   if (auth.isLoading) return <div className="h-full flex items-center justify-center text-ink-3">Loading…</div>;
-  if (devScreen) return <Login key={devScreen} restricted={auth.data?.restricted} email={auth.data?.email} />;
   if (!auth.user || loc.startsWith("/invite/")) return <Login restricted={auth.data?.restricted} email={auth.data?.email} />;
   return (
     <Layout>
